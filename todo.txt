@@ -1,0 +1,28 @@
+
+
+returning sliders !!
+
+fixing difficulty parsing for implicit rows in .osu files
+
+
+finishing parsing overall:
+
+timings - mainly beat lengths and slider multipliers
+-- inhertied + uninherited
+
+
+music
+
+gui
+
+splitting code into files/libs/plugins
+
+sound effects
+
+visual effects
+
+
+
+
+
+
