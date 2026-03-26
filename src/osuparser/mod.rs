@@ -1,6 +1,6 @@
 use std::{error::Error, fs, io::Read, path::Path};
 
-use bevy::prelude::*;
+use bevy::{math::f32, prelude::*, reflect::GetTupleField};
 
 #[derive(Debug, Clone)]
 pub enum OsuHitObjectType {
@@ -124,7 +124,7 @@ struct RealHitWindow {
 }
 
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 struct OsuTimingPoint {
     time: i32,
     beat_length: f32,
@@ -135,6 +135,15 @@ struct OsuTimingPoint {
     uninherited: bool,
     effects: i32
 }
+impl OsuTimingPoint {
+    fn new(time:i32, beat_length: f32, meter: i32, sample_set: i32, sample_index: i32, volume: i32, uninherited: bool, effects: i32) -> Self {
+        Self { time, beat_length, meter, sample_set, sample_index, volume, uninherited, effects }
+    }
+    fn from_tuple(t: (i32,f32,i32,i32,i32,i32,bool,i32)) -> Self {
+        OsuTimingPoint::new(t.0,t.1,t.2,t.3,t.4,t.5,t.6,t.7)
+    }
+}
+
 
 
 #[derive(Resource, Default)]
@@ -152,6 +161,12 @@ pub struct OsuBeatmap {
 
     pub screen_size: Vec2,
 }
+
+
+const DEFAULT_OSU_TIMING_POINT: OsuTimingPoint = OsuTimingPoint {time: 0, beat_length: 600.0, meter: 4, sample_set: 0, sample_index: 0, volume: 0, uninherited:true, effects: 0};
+
+
+
 
 impl OsuBeatmap {   
     pub fn calc_real_values(&mut self) {
@@ -176,8 +191,45 @@ impl OsuBeatmap {
 
     }
 
-    pub fn get_time_to_complete_slider(&self, length: f32) -> f32 {
-        return (((length * (480.0/self.screen_size.y)) / (self.difficulty.slider_multiplier * 100.0 * 1.0)) * 434.0) / 1000.0; 
+    pub fn get_current_timing_points(&self, time_since_start: i32) -> (OsuTimingPoint, Option<OsuTimingPoint>) {
+        let mut last_uninherited: &OsuTimingPoint = &DEFAULT_OSU_TIMING_POINT;
+        let mut last_inherited_opt_ref: Option<&OsuTimingPoint> = None;
+        for (idx, timing) in self.timing_points.iter().enumerate() {
+            if timing.time < time_since_start {
+                if timing.uninherited {
+                    last_uninherited = timing;
+                    last_inherited_opt_ref = None;
+                } else {
+                    last_inherited_opt_ref = Some(timing);
+                }
+            } else {
+                break;
+            }
+        }
+        let last_inherited: Option<OsuTimingPoint> = if let Some(inherited) = last_inherited_opt_ref {
+            Some(inherited.to_owned())
+        } else {
+            None
+        };
+        (last_uninherited.to_owned(), last_inherited)
+    }
+
+    pub fn get_current_slider_velocity(&self, time_since_start: i32) -> f32 {
+        let (uninherited, inherited) = self.get_current_timing_points(time_since_start);
+        if let Some(inherited_inner) = inherited {
+            return (-100.0 / inherited_inner.beat_length);
+        } else {
+            return 1.0;
+        }
+    }
+
+    pub fn get_beat_length(&self, time_since_start: i32) -> f32 {
+        self.get_current_timing_points(time_since_start).0.beat_length
+    }
+
+    pub fn get_time_to_complete_slider(&self, length: f32, time_since_start: i32) -> f32 {
+        // println!("current SV: {}\nSM: {}\nbeat length: {}\ntss: {time_since_start}", self.get_current_slider_velocity(time_since_start), self.difficulty.slider_multiplier, self.get_beat_length(time_since_start));
+        return (((length * (480.0/self.screen_size.y)) / (self.difficulty.slider_multiplier * 100.0 * self.get_current_slider_velocity(time_since_start))) * self.get_beat_length(time_since_start)) / 1000.0; 
     }
 
     pub fn get_real_circle_size(&self) -> f32 {
@@ -212,8 +264,11 @@ pub fn parse_osu_file(p: &Path) -> std::io::Result<OsuBeatmap> {
     let mut timing_points = str_to_line_vec(split_s[6].as_str());
     let mut colors = str_to_line_vec(split_s[7].as_str());
     difficulty.pop();
-    difficulty.pop();
+    timing_points.pop();
 
+
+    difficulty = difficulty.into_iter().filter(|item| !item.is_empty()).collect();
+    timing_points = timing_points.into_iter().filter(|item| !item.is_empty()).collect();
    
 
     let beatmap_str = split_s[8].trim();
@@ -239,7 +294,37 @@ pub fn parse_osu_file(p: &Path) -> std::io::Result<OsuBeatmap> {
     }
     println!("diffs: {:?}", osu_beatmap.difficulty);
 
+    let timing_points_split: Vec<Vec<String>> = timing_points.into_iter().map(|item| item.split(",").map(|s| s.to_string()).collect()).collect();
+
+    let mut timing_points_real: Vec<OsuTimingPoint> = vec![];
+    for timing_point_string_vec in timing_points_split {
+        // let mut timing_point: OsuTimingPoint = OsuTimi
+        let mut x: (i32, f32, i32,i32,i32,i32,bool,i32) = (0,0.0,0,0,0,0,false,0);
+        println!("timing point {:?}", timing_point_string_vec);
+        for (i, item) in timing_point_string_vec.into_iter().enumerate() {
+            if i == 1 {
+                *(x.get_field_mut(i).unwrap()) = item.parse::<f32>().unwrap();
+            } else if i == 6 {
+                *(x.get_field_mut(i).unwrap()) = item.parse::<i32>().unwrap() == 1;
+            } else {
+                *(x.get_field_mut(i).unwrap()) = item.parse::<i32>().unwrap();
+            }
+        }
+        timing_points_real.push(OsuTimingPoint::from_tuple(x));
+    }   
+    osu_beatmap.timing_points = timing_points_real;
+
+    // println!("{:?}", timing_points_real);
+
+    // for i in timings_split {
+    //     println!("{}", i.len());
+    // }
+    // println!("timings: {:?}", timing_points_split);
+
     // osu_beatmap.difficulty = difficulty_split[2].1.parse().unwrap();
+
+
+    
 
 
 
@@ -292,7 +377,7 @@ pub fn parse_osu_file(p: &Path) -> std::io::Result<OsuBeatmap> {
 
             let curve_type_s = curve_vec.remove(0);
 
-            println!("CurveType: {}", curve_type_s);
+            // println!("CurveType: {}", curve_type_s);
 
             let curve_type = match curve_type_s.as_str() {
                 "B" => CurveType::Bezier,
