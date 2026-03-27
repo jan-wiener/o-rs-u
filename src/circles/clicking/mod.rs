@@ -1,7 +1,8 @@
 use bevy::prelude::*;
-use crate::public_resources::*;
 use bevy::ecs::system::entity_command::despawn;
+
 use crate::osuparser::*;
+use crate::public_resources::*;
 
 
 
@@ -16,7 +17,7 @@ pub fn remove_circle(mut circles_to_remove: ResMut<Messages<RemoveCircle>>, mut 
 }
 
 pub fn circle_click(
-    time: Res<Time>,
+    time: Res<Time<Fixed>>,
     mouse_button: Res<ButtonInput<MouseButton>>,
     kb: Res<ButtonInput<KeyCode>>,
 
@@ -26,37 +27,61 @@ pub fn circle_click(
     mut commands: Commands,
     mut removewriter: MessageWriter<RemoveCircle>,
     mut slider_res: ResMut<MovingSlidersRes>,
+    bmw: Res<BeatmapWorkerInfo>,
+    osu: Res<OsuBeatmap>,
+    mut score: ResMut<ScoreInfo>,
+    mut add_score_msg: MessageWriter<AddScore>,
 ) {
-    if !mouse_button.just_pressed(MouseButton::Left)
-        && !kb.just_pressed(KeyCode::KeyX)
-        && !kb.just_pressed(KeyCode::KeyY)
-    {
+    
+    let mut click_count = 0;
+    if kb.just_pressed(KeyCode::KeyZ) || mouse_button.just_pressed(MouseButton::Left) {click_count +=1}
+    if kb.just_pressed(KeyCode::KeyX) || mouse_button.just_pressed(MouseButton::Right) {click_count +=1}
+    if click_count == 0 {
         return;
     }
 
+
+
     println!("Clicked");
 
-    let mut selected_ent: (Option<Entity>, f32) = (None, -100.0);
+
+    let mut potential_entities: Vec<(Entity, f32)> = Vec::new();
 
     for (tr, mut circleinfo, centity, children) in &mut circles_q {
-        println!("{} || {}", mouse_info.pos, tr.translation.truncate());
-        println!("size {}", circleinfo.size);
+
         if mouse_info.pos.distance(tr.translation.truncate()) <= circleinfo.size
-            && selected_ent.1 < tr.translation.z
             && !circleinfo.clicked
         {
-            selected_ent = (Some(centity), tr.translation.z);
+            potential_entities.push((centity, tr.translation.z));
         }
     }
+    potential_entities.sort_by(|a, b | {
+        a.1.total_cmp(&b.1)
+    });
+    potential_entities.reverse();
+    // let selected_entities = potential_entities.split_at;
 
-    if let Some(ent) = selected_ent.0 {
+
+    for (ent, _) in potential_entities.iter().take(click_count) {
         
-        let (tr, mut circleinfo, entity, children) = circles_q.get_mut(ent).unwrap();
+        let (_tr, mut circleinfo, entity, children) = circles_q.get_mut(ent.to_owned()).unwrap();
         circleinfo.clicked = true;
+
+        let delta = (bmw.get_time_since_start(time.elapsed_secs()) - circleinfo.moment_t).abs();
+
+        let result = HitScore::from_delta(delta, &osu.real_hit_window);
+
+
+        //   Score = Hit Value + (Hit Value * ((Combo multiplier * Difficulty multiplier * Mod multiplier) / 25))
+        
+        add_score_msg.write(AddScore::from_hit_score(&result));
+        score.hit_score.push(result);
+
+
         match circleinfo.circle_type {
             // println!("___");
             OsuHitObjectType::Circle(_) => {
-                removewriter.write(RemoveCircle { entity: ent });
+                removewriter.write(RemoveCircle { entity: ent.clone() });
             }
             OsuHitObjectType::Slider(_) => {
                 slider_res.sliders.push(MovingSlider {

@@ -123,13 +123,17 @@ fn main() {
         ..Default::default()
     }));
 
+
     app.add_plugins(mouse_pos_system::MousePosPlugin);
+
+    app.insert_resource(Time::<Fixed>::from_hz(240.0));
 
     app.add_message::<OsuHitObject>();
     app.add_message::<RemoveCircle>();
     app.add_message::<LoadBeatmap>();
     app.add_message::<DrawLine>();
     app.add_message::<StartMovingSlider>();
+    app.add_message::<AddScore>();
 
     app.init_gizmo_group::<LineGizmos>();
 
@@ -153,8 +157,11 @@ fn main() {
             circles::sliders::draw_from_points,
             circles::sliders::remove_line,
             circles::sliders::move_slider,
+            circles::scoring::score_system
         ),
     );
+
+    // app.add_systems(FixedUpdate, circles::clicking::circle_click);
 
     app.run();
 }

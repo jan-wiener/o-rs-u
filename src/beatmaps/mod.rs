@@ -12,6 +12,7 @@ pub fn load_osu_beatmap(
     mut bmw: ResMut<BeatmapWorkerInfo>,
     time: Res<Time>,
     mut score_info: ResMut<ScoreInfo>,
+    mut general_info: ResMut<GeneralInfo>,
 ) {
     let mut bmap_path_opt: Option<String> = None;
 
@@ -55,6 +56,8 @@ pub fn load_osu_beatmap(
     *osu = beatmap;
     bmw.started_at = time.elapsed_secs() + 3.0;
     bmw.start = true;
+
+
 }
 
 

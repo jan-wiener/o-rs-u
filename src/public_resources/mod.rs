@@ -8,27 +8,29 @@ use crate::osuparser::*;
 
 #[derive(Component)]
 pub struct OsuRing {
+    pub moment_t: f32,
     pub original_scale: f32,
     pub slider_mode: bool, // time_to_shrink: f32,
 }
 impl OsuRing {
-    pub fn new(original_scale: f32) -> Self {
+    pub fn new(original_scale: f32, moment_t: f32) -> Self {
         Self {
             original_scale,
             slider_mode: false,
+            moment_t,
             // time_to_shrink,
         }
     }
 }
-impl Default for OsuRing {
-    fn default() -> Self {
-        Self {
-            original_scale: 1.5,
-            slider_mode: false,
-            // time_to_shrink: 0.5,
-        }
-    }
-}
+// impl Default for OsuRing {
+//     fn default() -> Self {
+//         Self {
+//             original_scale: 1.5,
+//             slider_mode: false,
+//             // time_to_shrink: 0.5,
+//         }
+//     }
+// }
 
 #[derive(Component)]
 pub struct CircleInfo {
@@ -41,6 +43,8 @@ pub struct CircleInfo {
 
     pub original_pos: Vec2,
 
+    pub moment_t: f32,
+
     pub size: f32,
 }
 
@@ -51,6 +55,7 @@ impl Default for CircleInfo {
             circle_type: OsuHitObjectType::Circle(false),
             points: None,
             size: 0.0,
+            moment_t: 0.0,
             segments: None,
             original_pos: Vec2::default(),
             slides: 1,
@@ -128,9 +133,18 @@ pub struct BeatmapWorkerInfo {
     pub next: usize,
 }
 
+impl BeatmapWorkerInfo {
+    pub fn get_time_since_start(&self, time: f32) -> f32 {
+        return time - self.started_at
+    }
+}
+
+
+
 #[derive(Resource, Default)]
 pub struct GeneralInfo {
     pub real_circle_radius: f32,
+    pub real_hit_window: f32,
 }
 
 
@@ -143,11 +157,58 @@ pub enum HitScore {
 }
 
 
+impl HitScore {
+    pub fn from_delta(delta: f32, osu_real_hit_window: &RealHitWindow) -> Self {
+        if delta < osu_real_hit_window.score300 {
+            Self::Great
+        } else if delta < osu_real_hit_window.score100 {
+            Self::Ok
+        } else if delta < osu_real_hit_window.score50 {
+            Self::Meh
+        } else {
+            Self::Miss
+        }
+
+    }
+}
+
+
 #[derive(Resource, Default)]
 pub struct ScoreInfo {
     pub score: usize,
     pub accuracy: f32,
+    pub current_combo: usize,
     pub hit_score: Vec<HitScore>,
 }
+
+
+#[derive(Message)]
+pub struct AddScore {
+    score: isize
+}
+
+
+//Score = ((700000 * combo_bonus / max_combo_bonus) + (300000 * ((accuracy_percentage / 100) ^ 10) * elapsed_objects / total_objects) + spinner_bonus) * mod_multiplier
+impl AddScore {
+    pub fn from_hit_score(hit_score: &HitScore) -> Self {
+        let mut score = 0;
+        match hit_score {
+            HitScore::Great => {
+                score = 300;
+            },
+            HitScore::Ok => {
+                score = 100;
+            },
+            HitScore::Meh => {
+                score = 50;
+            },
+            HitScore::Miss => {
+
+            },
+        }
+        Self {score}
+    }
+}
+
 
 

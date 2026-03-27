@@ -74,7 +74,7 @@ pub struct Slider {
     pub curve_type: CurveType,
     pub curve_points: Vec<Point>,
     pub trcurve_points: Vec<Vec2>,
-    pub slides: u32,
+    pub slides: usize,
     pub length: f64,
 }
 
@@ -90,8 +90,214 @@ pub struct OsuHitObject {
     pub hitsound: OsuHitSound,
     pub slider_params: Option<Slider>,
     pub spinner_params: Option<Spinner>,
+
+    pub points: Option<Vec<Vec2>>,
+    pub segments: Option<usize>,
+    pub slides: usize,
+    pub length: f32,
 }
 
+use crate::circles::etc;
+use crate::circles::bezier;
+use crate::circles::catmull;
+use std::f32::consts::PI;
+use crate::circles::etc::*;
+
+impl OsuHitObject {
+    fn compute_points(&mut self) {
+        let pos = self.trpos.expect("Not converted pos");
+        let slider_info = self.slider_params.as_ref().unwrap();
+
+        self.slides = slider_info.slides;
+        // let tr_curve_points_inner = slider_info.trcurve_points;
+        let mut points_inner: Vec<Vec2> = vec![];
+
+        // let iter_steps = (0..10).map(|x| x as f32 / 10.0);
+        let mut length = 0.0;
+
+        let mut linear = || {
+            let mut key_points = slider_info.trcurve_points.clone();
+
+            *(&mut length) = etc::vec_vec2_len(&key_points);
+            let steps = length / 10.0;
+            println!("{:?}", key_points);
+            for (idx, key_point) in key_points.iter().enumerate() {
+                if idx.checked_sub(1).is_some()
+                    && let Some(last) = key_points.get(idx - 1)
+                {
+                    let seg_length = key_point.distance(*last);
+                    let seg_steps = seg_length / length * steps;
+                    let seg_step_length = seg_length / seg_steps;
+
+                    println!("{}, {}, {}", seg_length, seg_steps, seg_step_length);
+
+                    let mut seg_length_covered = 0.0;
+                    let mut next = last.clone();
+                    loop {
+                        let step = (key_point - last).normalize() * seg_step_length;
+                        next = next + step;
+                        seg_length_covered += step.length();
+                        if seg_length_covered > seg_length {
+                            println!("broken");
+                            break;
+                        }
+                        points_inner.push(next);
+                    }
+                }
+            }
+        };
+        // println!("t: {:?}", slider_info.curve_type);
+        match slider_info.curve_type {
+            CurveType::Bezier => {
+                let mut splits: Vec<Vec<Vec2>> = vec![vec![]];
+                for (idx, trpoint) in slider_info.trcurve_points.iter().enumerate() {
+                    if idx.checked_sub(1).is_some()
+                        && let Some(last) = slider_info.trcurve_points.get(idx - 1)
+                    {
+                        if last == trpoint {
+                            splits.push(vec![]);
+                        }
+                    }
+                    splits.last_mut().unwrap().push(trpoint.clone());
+                }
+
+                for split in &splits {
+                    length += bezier::bezier_length(split, 10);
+                }
+                // length = bezier_length(&slider_info.trcurve_points, 10);
+
+                // println!("splits: {}", splits.len());
+
+                let steps = (length / 10.0 / splits.len() as f32) as i32;
+                self.segments = Some(splits.len());
+                for split in splits {
+                    for step in (0..steps).map(|x| x as f32 / steps as f32) {
+                        points_inner.push(bezier::bezier_casteljau(&split, step));
+                    }
+                }
+                length = etc::vec_vec2_len(&points_inner);
+
+                // println!("len: {}\nPoints: {:?}", length, points_inner);
+            }
+            CurveType::Centripetal => {
+                let spline = catmull::CentripetalCatmullRomSpline2d::new(&slider_info.trcurve_points);
+                length = spline.length(10 / spline.segments.len());
+                let steps = (length / 10.0) as i32;
+                for step in (0..steps).map(|x| x as f32 / steps as f32) {
+                    points_inner.push(bezier::bezier_casteljau(
+                        &slider_info.trcurve_points,
+                        step * (spline.segments.len() as f32),
+                    ));
+                }
+            }
+            CurveType::Linear => {
+                linear();
+                // let mut key_points = slider_info.trcurve_points.clone();
+                // length = vec_vec2_len(&key_points);
+                // let steps = length / 10.0;
+                // println!("{:?}", key_points);
+                // for (idx, key_point) in key_points.iter().enumerate() {
+                //     if idx.checked_sub(1).is_some()
+                //         && let Some(last) = key_points.get(idx - 1)
+                //     {
+                //         let seg_length = key_point.distance(*last);
+                //         let seg_steps = seg_length / length * steps;
+                //         let seg_step_length = seg_length / seg_steps;
+                //         println!("{}, {}, {}", seg_length, seg_steps, seg_step_length);
+                //         let mut seg_length_covered = 0.0;
+                //         let mut next = last.clone();
+                //         loop {
+                //             let step = (key_point - last).normalize() * seg_step_length;
+                //             next = next + step;
+                //             seg_length_covered += step.length();
+                //             if seg_length_covered > seg_length {
+                //                 println!("broken");
+                //                 break;
+                //             }
+                //             points_inner.push(next);
+                //         }
+                //     }
+                // }
+                // println!("{:?}", points_inner);
+            }
+            CurveType::PerfectCircle => {
+                let key_points = slider_info.trcurve_points.clone();
+                // println!("key points: {:?}", key_points);
+                let start = key_points[0];
+                let control = key_points[1];
+                let end = key_points[2];
+
+                let control_start = start - control;
+                let control_end = end - control;
+
+                let start_control_middle = control + (control_start * 0.5);
+                let end_control_middle = control + (control_end * 0.5);
+
+                let start_control_perpendicular =
+                    (-(control_start / 2.0)).rotate(Vec2::from_angle(PI * 0.5));
+                let end_control_perpendicular =
+                    (-(control_end / 2.0)).rotate(Vec2::from_angle(PI * 0.5));
+
+                let Some(center) = line_intersection(
+                    start_control_middle,
+                    start_control_perpendicular.normalize(),
+                    end_control_middle,
+                    end_control_perpendicular.normalize(),
+                ) else {
+                    println!("Break, line fail");
+                    linear();
+                    return;
+                };
+
+                let radius = center.distance(start);
+
+                let center_start = start - center;
+                let center_control = control - center;
+                let center_end = end - center;
+
+                let alpha = norm_angle(center_start.to_angle());
+                let beta = norm_angle(center_control.to_angle());
+                let gamma = norm_angle(center_end.to_angle());
+                let d_se = ccw_diff(alpha, gamma);
+                let d_sc = ccw_diff(alpha, beta);
+                let counter_clockwise = d_sc <= d_se;
+
+                let mut current = center_start;
+
+                // println!("{:?},{:?},{:?},{:?}",start_control_middle,
+                //     start_control_perpendicular.normalize(),
+                //     end_control_middle,
+                //     end_control_perpendicular.normalize(),
+                // );
+                // println!("alpha: {alpha}; beta: {beta}; gamma: {gamma}");
+                // println!("pos: {:?}, center: {:?}", start, center);
+
+                if counter_clockwise {
+                    println!("delta bigger");
+                    while norm_angle(current.to_angle()) < gamma {
+                        current = current.rotate(Vec2::from_angle(PI / radius));
+                        points_inner.push(center + current.clone());
+                    }
+                } else {
+                    println!("delta smaller");
+                    while norm_angle(current.to_angle()) > gamma {
+                        current = current.rotate(Vec2::from_angle(-PI / radius));
+                        points_inner.push(center + current.clone());
+                    }
+                }
+                length = vec_vec2_len(&points_inner);
+                // println!("PERFECT CIRCLE POINTS: {:?}", points_inner);
+            }
+            _ => {
+                warn!("Curve for a slider not loaded!")
+            }
+        }
+        // println!("{}", osu.get_time_to_complete_slider(length));
+        
+        self.points = Some(points_inner);
+        self.length = length;
+    }
+}
 
 #[derive(Debug)]
 pub struct OsuDifficulty {
@@ -100,8 +306,6 @@ pub struct OsuDifficulty {
     pub overall_diff: f32,
     pub approach_rate: f32,
     pub slider_multiplier: f32,
-
-
 }
 
 impl Default for OsuDifficulty {
@@ -111,18 +315,17 @@ impl Default for OsuDifficulty {
             circle_size: 5.0,
             approach_rate: 8.0,
             overall_diff: 5.0,
-            slider_multiplier: 5.0
+            slider_multiplier: 5.0,
         }
     }
 }
 
 #[derive(Default)]
-struct RealHitWindow {
+pub struct RealHitWindow {
     pub score300: f32,
     pub score100: f32,
-    pub score50: f32
+    pub score50: f32,
 }
-
 
 #[derive(Default, Debug, Clone)]
 struct OsuTimingPoint {
@@ -133,54 +336,77 @@ struct OsuTimingPoint {
     sample_index: i32,
     volume: i32,
     uninherited: bool,
-    effects: i32
+    effects: i32,
 }
 impl OsuTimingPoint {
-    fn new(time:i32, beat_length: f32, meter: i32, sample_set: i32, sample_index: i32, volume: i32, uninherited: bool, effects: i32) -> Self {
-        Self { time, beat_length, meter, sample_set, sample_index, volume, uninherited, effects }
+    fn new(
+        time: i32,
+        beat_length: f32,
+        meter: i32,
+        sample_set: i32,
+        sample_index: i32,
+        volume: i32,
+        uninherited: bool,
+        effects: i32,
+    ) -> Self {
+        Self {
+            time,
+            beat_length,
+            meter,
+            sample_set,
+            sample_index,
+            volume,
+            uninherited,
+            effects,
+        }
     }
-    fn from_tuple(t: (i32,f32,i32,i32,i32,i32,bool,i32)) -> Self {
-        OsuTimingPoint::new(t.0,t.1,t.2,t.3,t.4,t.5,t.6,t.7)
+    fn from_tuple(t: (i32, f32, i32, i32, i32, i32, bool, i32)) -> Self {
+        OsuTimingPoint::new(t.0, t.1, t.2, t.3, t.4, t.5, t.6, t.7)
     }
 }
-
-
 
 #[derive(Resource, Default)]
 pub struct OsuBeatmap {
     pub hit_objects: Vec<OsuHitObject>,
     pub difficulty: OsuDifficulty,
 
-    
     pub timing_points: Vec<OsuTimingPoint>,
 
     pub real_circle_size: f32,
     pub real_hit_window: RealHitWindow,
     pub real_approach_time: f32,
+    pub max_combo: usize,
 
+    pub difficulty_score_multiplier: f32,
 
     pub screen_size: Vec2,
 }
 
+const DEFAULT_OSU_TIMING_POINT: OsuTimingPoint = OsuTimingPoint {
+    time: 0,
+    beat_length: 600.0,
+    meter: 4,
+    sample_set: 0,
+    sample_index: 0,
+    volume: 0,
+    uninherited: true,
+    effects: 0,
+};
 
-const DEFAULT_OSU_TIMING_POINT: OsuTimingPoint = OsuTimingPoint {time: 0, beat_length: 600.0, meter: 4, sample_set: 0, sample_index: 0, volume: 0, uninherited:true, effects: 0};
-
-
-
-
-impl OsuBeatmap {   
+impl OsuBeatmap {
     pub fn calc_real_values(&mut self) {
-        let score300 = 80.0 - 6.0 * self.difficulty.overall_diff;
-        let score100 = 140.0 - 8.0 * self.difficulty.overall_diff;
-        let score50 = 200.0 - 10.0 * self.difficulty.overall_diff;
+        let score300 = (80.0 - 6.0 * self.difficulty.overall_diff) / 1000.0;
+        let score100 = (140.0 - 8.0 * self.difficulty.overall_diff) / 1000.0;
+        let score50 = (200.0 - 10.0 * self.difficulty.overall_diff) / 1000.0;
 
-        self.real_hit_window = RealHitWindow { 
+        self.real_hit_window = RealHitWindow {
             score300,
             score100,
-            score50
+            score50,
         };
 
-        self.real_circle_size = (self.screen_size.y / 480.0 ) * (54.4 - 4.48 * (self.difficulty.circle_size as f32));
+        self.real_circle_size =
+            (self.screen_size.y / 480.0) * (54.4 - 4.48 * (self.difficulty.circle_size as f32));
 
         if self.difficulty.approach_rate < 5.0 {
             self.real_approach_time = 1200.0 + 120.0 * (5.0 - self.difficulty.approach_rate);
@@ -189,9 +415,35 @@ impl OsuBeatmap {
         }
         self.real_approach_time /= 1000.0;
 
+        let difficulty_points =
+            self.difficulty.circle_size + self.difficulty.hp_drain + self.difficulty.overall_diff;
+        let diff_multiplier = (difficulty_points / 6.0).floor() + 2.0;
+        self.difficulty_score_multiplier = diff_multiplier;
+        for osuhitobj in &mut self.hit_objects {
+            if let OsuHitObjectType::Slider(_) = osuhitobj.hitobjecttype {
+                osuhitobj.compute_points();
+            }
+           
+        }
+        // match difficulty_points {
+        //     n if n <= 5.0 => {
+        //     },
+        //     n if n <= 12.0 => {
+        //     },
+        //     n if n <= 17.0 => {
+        //     },
+        //     n if n <= 24.0 => {
+        //     },
+        //     n if n <= 30.0 => {
+        //     },
+        //     _=>{}
+        // }
     }
 
-    pub fn get_current_timing_points(&self, time_since_start: i32) -> (OsuTimingPoint, Option<OsuTimingPoint>) {
+    pub fn get_current_timing_points(
+        &self,
+        time_since_start: i32,
+    ) -> (OsuTimingPoint, Option<OsuTimingPoint>) {
         let mut last_uninherited: &OsuTimingPoint = &DEFAULT_OSU_TIMING_POINT;
         let mut last_inherited_opt_ref: Option<&OsuTimingPoint> = None;
         for (idx, timing) in self.timing_points.iter().enumerate() {
@@ -206,7 +458,8 @@ impl OsuBeatmap {
                 break;
             }
         }
-        let last_inherited: Option<OsuTimingPoint> = if let Some(inherited) = last_inherited_opt_ref {
+        let last_inherited: Option<OsuTimingPoint> = if let Some(inherited) = last_inherited_opt_ref
+        {
             Some(inherited.to_owned())
         } else {
             None
@@ -224,12 +477,19 @@ impl OsuBeatmap {
     }
 
     pub fn get_beat_length(&self, time_since_start: i32) -> f32 {
-        self.get_current_timing_points(time_since_start).0.beat_length
+        self.get_current_timing_points(time_since_start)
+            .0
+            .beat_length
     }
 
     pub fn get_time_to_complete_slider(&self, length: f32, time_since_start: i32) -> f32 {
         // println!("current SV: {}\nSM: {}\nbeat length: {}\ntss: {time_since_start}", self.get_current_slider_velocity(time_since_start), self.difficulty.slider_multiplier, self.get_beat_length(time_since_start));
-        return (((length * (480.0/self.screen_size.y)) / (self.difficulty.slider_multiplier * 100.0 * self.get_current_slider_velocity(time_since_start))) * self.get_beat_length(time_since_start)) / 1000.0; 
+        return (((length * (480.0 / self.screen_size.y))
+            / (self.difficulty.slider_multiplier
+                * 100.0
+                * self.get_current_slider_velocity(time_since_start)))
+            * self.get_beat_length(time_since_start))
+            / 1000.0;
     }
 
     pub fn get_real_circle_size(&self) -> f32 {
@@ -239,7 +499,8 @@ impl OsuBeatmap {
 }
 
 fn str_to_line_vec(s: &str) -> Vec<String> {
-    s.trim().to_string()
+    s.trim()
+        .to_string()
         .split("\n")
         .map(|x| return x.trim().to_string())
         .collect::<Vec<String>>()
@@ -255,7 +516,7 @@ pub fn parse_osu_file(p: &Path) -> std::io::Result<OsuBeatmap> {
         .split("]\r")
         .map(|x| return x.to_string())
         .collect::<Vec<String>>();
- 
+
     let mut general = str_to_line_vec(split_s[1].as_str());
     let mut editor = str_to_line_vec(split_s[2].as_str());
     let mut metadata = str_to_line_vec(split_s[3].as_str());
@@ -266,40 +527,52 @@ pub fn parse_osu_file(p: &Path) -> std::io::Result<OsuBeatmap> {
     difficulty.pop();
     timing_points.pop();
 
-
-    difficulty = difficulty.into_iter().filter(|item| !item.is_empty()).collect();
-    timing_points = timing_points.into_iter().filter(|item| !item.is_empty()).collect();
-   
+    difficulty = difficulty
+        .into_iter()
+        .filter(|item| !item.is_empty())
+        .collect();
+    timing_points = timing_points
+        .into_iter()
+        .filter(|item| !item.is_empty())
+        .collect();
 
     let beatmap_str = split_s[8].trim();
     let beatmap_vec = str_to_line_vec(split_s[8].as_str());
 
     let mut osu_beatmap = OsuBeatmap::default();
 
-
-    let difficulty_split = difficulty.iter().map(|org| {
-        let items = org.split(":").map(|x| x.to_string()).collect::<Vec<String>>();
-        (items[0].to_owned(), items[1].parse::<f32>().unwrap())
-    }).collect::<Vec<(String, f32)>>();
+    let difficulty_split = difficulty
+        .iter()
+        .map(|org| {
+            let items = org
+                .split(":")
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>();
+            (items[0].to_owned(), items[1].parse::<f32>().unwrap())
+        })
+        .collect::<Vec<(String, f32)>>();
 
     for (name, value) in difficulty_split {
         match name.as_str() {
-            "HPDrainRate" => osu_beatmap.difficulty.hp_drain = value, 
-            "CircleSize" => osu_beatmap.difficulty.circle_size = value, 
-            "OverallDifficulty" => osu_beatmap.difficulty.overall_diff = value, 
-            "ApproachRate" => osu_beatmap.difficulty.approach_rate = value, 
-            "SliderMultiplier" => osu_beatmap.difficulty.slider_multiplier = value, 
-            _=>{}
+            "HPDrainRate" => osu_beatmap.difficulty.hp_drain = value,
+            "CircleSize" => osu_beatmap.difficulty.circle_size = value,
+            "OverallDifficulty" => osu_beatmap.difficulty.overall_diff = value,
+            "ApproachRate" => osu_beatmap.difficulty.approach_rate = value,
+            "SliderMultiplier" => osu_beatmap.difficulty.slider_multiplier = value,
+            _ => {}
         }
     }
     println!("diffs: {:?}", osu_beatmap.difficulty);
 
-    let timing_points_split: Vec<Vec<String>> = timing_points.into_iter().map(|item| item.split(",").map(|s| s.to_string()).collect()).collect();
+    let timing_points_split: Vec<Vec<String>> = timing_points
+        .into_iter()
+        .map(|item| item.split(",").map(|s| s.to_string()).collect())
+        .collect();
 
     let mut timing_points_real: Vec<OsuTimingPoint> = vec![];
     for timing_point_string_vec in timing_points_split {
         // let mut timing_point: OsuTimingPoint = OsuTimi
-        let mut x: (i32, f32, i32,i32,i32,i32,bool,i32) = (0,0.0,0,0,0,0,false,0);
+        let mut x: (i32, f32, i32, i32, i32, i32, bool, i32) = (0, 0.0, 0, 0, 0, 0, false, 0);
         println!("timing point {:?}", timing_point_string_vec);
         for (i, item) in timing_point_string_vec.into_iter().enumerate() {
             if i == 1 {
@@ -311,7 +584,7 @@ pub fn parse_osu_file(p: &Path) -> std::io::Result<OsuBeatmap> {
             }
         }
         timing_points_real.push(OsuTimingPoint::from_tuple(x));
-    }   
+    }
     osu_beatmap.timing_points = timing_points_real;
 
     // println!("{:?}", timing_points_real);
@@ -322,12 +595,6 @@ pub fn parse_osu_file(p: &Path) -> std::io::Result<OsuBeatmap> {
     // println!("timings: {:?}", timing_points_split);
 
     // osu_beatmap.difficulty = difficulty_split[2].1.parse().unwrap();
-
-
-    
-
-
-
 
     // println!("{:?}", split_s);
 
@@ -406,7 +673,7 @@ pub fn parse_osu_file(p: &Path) -> std::io::Result<OsuBeatmap> {
                 })
                 .collect();
 
-            let slides = beat_info[6].parse::<u32>().unwrap();
+            let slides = beat_info[6].parse::<usize>().unwrap();
             let length = beat_info[7].parse::<f64>().unwrap();
 
             slider = Some(Slider {
@@ -426,6 +693,7 @@ pub fn parse_osu_file(p: &Path) -> std::io::Result<OsuBeatmap> {
             hitsound: OsuHitSound::Normal,
             slider_params: slider,
             spinner_params: None,
+            ..Default::default()
         };
 
         // println!("{:?}", hitobj);
