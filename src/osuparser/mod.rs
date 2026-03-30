@@ -91,6 +91,7 @@ pub struct OsuHitObject {
     pub slider_params: Option<Slider>,
     pub spinner_params: Option<Spinner>,
 
+    pub ticks: Option<Vec<usize>>,
     pub points: Option<Vec<Vec2>>,
     pub segments: Option<usize>,
     pub slides: usize,
@@ -105,6 +106,7 @@ use crate::circles::etc::*;
 
 impl OsuHitObject {
     fn compute_points(&mut self) {
+
         let pos = self.trpos.expect("Not converted pos");
         let slider_info = self.slider_params.as_ref().unwrap();
 
@@ -293,6 +295,7 @@ impl OsuHitObject {
             }
         }
         // println!("{}", osu.get_time_to_complete_slider(length));
+        length = vec_vec2_len(&points_inner);
         
         self.points = Some(points_inner);
         self.length = length;
@@ -306,6 +309,7 @@ pub struct OsuDifficulty {
     pub overall_diff: f32,
     pub approach_rate: f32,
     pub slider_multiplier: f32,
+    pub slider_tick_rate: f32,
 }
 
 impl Default for OsuDifficulty {
@@ -316,6 +320,7 @@ impl Default for OsuDifficulty {
             approach_rate: 8.0,
             overall_diff: 5.0,
             slider_multiplier: 5.0,
+            slider_tick_rate: 1.0,
         }
     }
 }
@@ -394,6 +399,22 @@ const DEFAULT_OSU_TIMING_POINT: OsuTimingPoint = OsuTimingPoint {
 };
 
 impl OsuBeatmap {
+    pub fn calculate_max_combo(&self) -> usize {
+        let mut max_combo = 0;
+        for osuhitobj in &self.hit_objects {
+            match osuhitobj.hitobjecttype {
+                OsuHitObjectType::Slider(_) => {
+                    
+                },
+                OsuHitObjectType::Circle(_) => {
+                    max_combo += 1;
+                },
+                _ => {}
+            } 
+        }
+        max_combo
+    }
+
     pub fn calc_real_values(&mut self) {
         let score300 = (80.0 - 6.0 * self.difficulty.overall_diff) / 1000.0;
         let score100 = (140.0 - 8.0 * self.difficulty.overall_diff) / 1000.0;
@@ -419,12 +440,57 @@ impl OsuBeatmap {
             self.difficulty.circle_size + self.difficulty.hp_drain + self.difficulty.overall_diff;
         let diff_multiplier = (difficulty_points / 6.0).floor() + 2.0;
         self.difficulty_score_multiplier = diff_multiplier;
-        for osuhitobj in &mut self.hit_objects {
-            if let OsuHitObjectType::Slider(_) = osuhitobj.hitobjecttype {
-                osuhitobj.compute_points();
+
+        
+
+        for osuhitobj_idx in 0..self.hit_objects.len() {
+            if let OsuHitObjectType::Slider(_) = self.hit_objects[osuhitobj_idx].hitobjecttype {
+                let tick_interval = (self.get_beat_length((self.hit_objects[osuhitobj_idx].time*1000.0) as i32) / 1000.0) / self.difficulty.slider_tick_rate;
+
+                self.hit_objects[osuhitobj_idx].compute_points();
+
+                // println!("-----");
+                // println!("Tick interval {}", tick_interval);
+
+                let ttc = self.get_time_to_complete_slider(self.hit_objects[osuhitobj_idx].length, (self.hit_objects[osuhitobj_idx].time * 1000.0) as i32);
+                let length_per_tick = self.hit_objects[osuhitobj_idx].length * (tick_interval / ttc);
+
+
+                let mut passed_length = 0.0; 
+                let mut ticks: Vec<usize> = vec![];
+                let points = self.hit_objects[osuhitobj_idx].points.as_ref().unwrap();
+                
+                let mut last: &Vec2 = &points[0];
+                for (pidx, point) in points.iter().enumerate() {
+                    // println!("dist: {} | l: {}", passed_length, (length_per_tick * ((ticks.len() + 1) as f32)));;
+                    passed_length += point.distance(*last);
+                    last = point;
+                    if passed_length > (length_per_tick * ((ticks.len() + 1) as f32)) {
+                        ticks.push(pidx);
+                    }
+
+                }
+                
+
+                if ticks.len() > 0 && vec_vec2_len(&points[ticks.last().unwrap().to_owned()..points.len()]) < (length_per_tick / 7.5) {
+                    ticks.pop();
+                }
+                println!("len: {} | lpt: {} | ticks: {}", self.hit_objects[osuhitobj_idx].length, length_per_tick, ticks.len());
+
+                self.hit_objects[osuhitobj_idx].ticks = Some(ticks);
             }
-           
         }
+
+
+        let mut ticks = 0;
+        for osuhitobj in &self.hit_objects {
+            if let OsuHitObjectType::Slider(_) = osuhitobj.hitobjecttype {
+                ticks += osuhitobj.ticks.as_ref().unwrap().len() * osuhitobj.slides;
+            }
+        }
+        println!("Ticks: {}", ticks);
+
+
         // match difficulty_points {
         //     n if n <= 5.0 => {
         //     },
@@ -559,6 +625,7 @@ pub fn parse_osu_file(p: &Path) -> std::io::Result<OsuBeatmap> {
             "OverallDifficulty" => osu_beatmap.difficulty.overall_diff = value,
             "ApproachRate" => osu_beatmap.difficulty.approach_rate = value,
             "SliderMultiplier" => osu_beatmap.difficulty.slider_multiplier = value,
+            "SliderTickRate" => osu_beatmap.difficulty.slider_tick_rate = value,
             _ => {}
         }
     }
