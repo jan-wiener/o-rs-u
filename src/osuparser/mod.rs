@@ -399,12 +399,20 @@ const DEFAULT_OSU_TIMING_POINT: OsuTimingPoint = OsuTimingPoint {
 };
 
 impl OsuBeatmap {
-    pub fn calculate_max_combo(&self) -> usize {
+
+
+    //Score = ((700000 * combo_bonus / max_combo_bonus) + (300000 * ((accuracy_percentage / 100) ^ 10) * elapsed_objects / total_objects) + spinner_bonus) * mod_multiplier
+
+    pub fn calculate_score(&self, combo: usize, accuracy: f32, elapsed_objects: usize) -> usize {
+        ((700000.0 * (combo as f32) / (self.max_combo as f32)) + (300000.0 * accuracy.powi(10) * (elapsed_objects as f32) / (self.hit_objects.len() as f32) )) as usize
+    }
+    
+    pub fn calc_max_combo(&self) -> usize {
         let mut max_combo = 0;
         for osuhitobj in &self.hit_objects {
             match osuhitobj.hitobjecttype {
                 OsuHitObjectType::Slider(_) => {
-                    
+                    max_combo += 2 + osuhitobj.ticks.as_ref().unwrap().len();
                 },
                 OsuHitObjectType::Circle(_) => {
                     max_combo += 1;
@@ -489,21 +497,11 @@ impl OsuBeatmap {
             }
         }
         println!("Ticks: {}", ticks);
+        
+        // println!("Max Combo: {}", self.calc_max_combo());
+        self.max_combo = self.calc_max_combo();
 
 
-        // match difficulty_points {
-        //     n if n <= 5.0 => {
-        //     },
-        //     n if n <= 12.0 => {
-        //     },
-        //     n if n <= 17.0 => {
-        //     },
-        //     n if n <= 24.0 => {
-        //     },
-        //     n if n <= 30.0 => {
-        //     },
-        //     _=>{}
-        // }
     }
 
     pub fn get_current_timing_points(

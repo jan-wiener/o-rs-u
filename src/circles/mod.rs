@@ -46,8 +46,8 @@ pub fn summon_circle(
 
         match osuhitobj.hitobjecttype {
             OsuHitObjectType::Slider(_) => {
-                println!("Ticks: {:?}", osuhitobj.ticks.unwrap());
-                println!("Len: {}", osuhitobj.length);
+                // println!("Ticks: {:?}", osuhitobj.ticks.unwrap());
+                // println!("Len: {}", osuhitobj.length);
                 drawline_writer.write(DrawLine {
                     points: points.clone().unwrap(),
                     lifetime: osu.get_time_to_complete_slider(osuhitobj.length, time_since_start)

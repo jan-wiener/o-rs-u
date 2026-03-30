@@ -181,10 +181,38 @@ pub struct ScoreInfo {
     pub hit_score: Vec<HitScore>,
 }
 
+impl ScoreInfo {
+    pub fn get_accuracy(&self) -> f32 {
+        let mut accuracy_sum = 0.0;
+
+        for hit in &self.hit_score {
+            match hit {
+                HitScore::Great => {
+                    accuracy_sum += 1.0;
+                },
+                HitScore::Ok => {
+                    accuracy_sum += 0.66;
+                },
+                HitScore::Meh => {
+                    accuracy_sum += 0.33;
+                },
+                HitScore::Miss => {
+                    // no add
+                }
+            }
+        }
+        self.hit_score.len() as f32 / accuracy_sum
+    }
+}
+
+
+
+
+
 
 #[derive(Message)]
 pub struct AddScore {
-    score: isize
+    pub score: isize,
 }
 
 
@@ -203,7 +231,7 @@ impl AddScore {
                 score = 50;
             },
             HitScore::Miss => {
-
+                score = 0;
             },
         }
         Self {score}
