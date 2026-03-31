@@ -12,6 +12,7 @@ pub fn shrink_ring(
     osu: Res<OsuBeatmap>,
     mut slider_res: ResMut<MovingSlidersRes>,
     bmw: Res<BeatmapWorkerInfo>,
+    mut add_score_msg: MessageWriter<AddScore>,
 ) {
     if time.elapsed_secs() < 1.5 {
         return;
@@ -25,6 +26,10 @@ pub fn shrink_ring(
         } else if !ring.slider_mode && (bmw.get_time_since_start(time.elapsed_secs()) - ring.moment_t) > osu.real_hit_window.score50 {
             let mut circle = circle_q.get_mut(ch.parent()).unwrap();
             circle.clicked = true;
+
+            add_score_msg.write(AddScore::from_hit_score(&HitScore::Miss));
+            
+
             match circle.circle_type {
                 OsuHitObjectType::Circle(_) => {
                     rmcrc.write(RemoveCircle {

@@ -273,30 +273,32 @@ impl OsuHitObject {
                 // );
                 // println!("alpha: {alpha}; beta: {beta}; gamma: {gamma}");
                 // println!("pos: {:?}, center: {:?}", start, center);
-
+                println!("Current: {} | gamma: {}", norm_angle(current.to_angle()), gamma); 
+                let angle_step = PI / radius;
+                let mut current_angle = alpha;
+                
                 if counter_clockwise {
                     println!("delta bigger");
-                    while norm_angle(current.to_angle()) < gamma {
-                        current = current.rotate(Vec2::from_angle(PI / radius));
+                    while ccw_diff(current_angle, gamma) > angle_step {
+                        current_angle += angle_step;
+                        current = current.rotate(Vec2::from_angle(angle_step));
                         points_inner.push(center + current.clone());
                     }
                 } else {
                     println!("delta smaller");
-                    while norm_angle(current.to_angle()) > gamma {
-                        current = current.rotate(Vec2::from_angle(-PI / radius));
+                    while ccw_diff(gamma, current_angle) > angle_step {
+                        current_angle -= angle_step;
+                        current = current.rotate(Vec2::from_angle(-angle_step));
                         points_inner.push(center + current.clone());
                     }
                 }
                 length = vec_vec2_len(&points_inner);
                 // println!("PERFECT CIRCLE POINTS: {:?}", points_inner);
             }
-            _ => {
-                warn!("Curve for a slider not loaded!")
-            }
         }
         // println!("{}", osu.get_time_to_complete_slider(length));
-        length = vec_vec2_len(&points_inner);
-        
+        // length = vec_vec2_len(&points_inner);
+        println!("Points inner: {:?}", points_inner);
         self.points = Some(points_inner);
         self.length = length;
     }
@@ -333,15 +335,15 @@ pub struct RealHitWindow {
 }
 
 #[derive(Default, Debug, Clone)]
-struct OsuTimingPoint {
-    time: i32,
-    beat_length: f32,
-    meter: i32,
-    sample_set: i32,
-    sample_index: i32,
-    volume: i32,
-    uninherited: bool,
-    effects: i32,
+pub struct OsuTimingPoint {
+    pub time: i32,
+    pub beat_length: f32,
+    pub meter: i32,
+    pub sample_set: i32,
+    pub sample_index: i32,
+    pub volume: i32,
+    pub uninherited: bool,
+    pub effects: i32,
 }
 impl OsuTimingPoint {
     fn new(
@@ -452,7 +454,9 @@ impl OsuBeatmap {
         
 
         for osuhitobj_idx in 0..self.hit_objects.len() {
+            println!("{:?}", self.hit_objects[osuhitobj_idx]);
             if let OsuHitObjectType::Slider(_) = self.hit_objects[osuhitobj_idx].hitobjecttype {
+                // println!("Slider points: {:?}", self.hit_objects[osuhitobj_idx].points);
                 let tick_interval = (self.get_beat_length((self.hit_objects[osuhitobj_idx].time*1000.0) as i32) / 1000.0) / self.difficulty.slider_tick_rate;
 
                 self.hit_objects[osuhitobj_idx].compute_points();

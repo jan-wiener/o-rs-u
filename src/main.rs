@@ -1,25 +1,15 @@
 use bevy::prelude::*;
 
-mod osuparser;
-mod circles;
-mod public_resources;
 mod beatmaps;
+mod circles;
+mod osuparser;
+mod public_resources;
 
-
-use crate::public_resources::*;
 use crate::circles::etc::*;
-use crate::osuparser::{OsuHitObject};
-
-
+use crate::osuparser::OsuHitObject;
+use crate::public_resources::*;
 
 const CIRCLE_VISUAL_MULTIPLIER: f32 = 0.8;
-
-
-
-
-
-
-
 
 fn setup_world(
     assets: Res<AssetServer>,
@@ -77,11 +67,35 @@ fn setup_world(
     commands.spawn((s, Transform::from_xyz(0.0, 0.0, 0.0)));
 
     load_bmap_msg.write(LoadBeatmap {
-        path: "bad_apple.osu".into(),
+        path: "o.osu".into(),
     });
+
+    commands
+        .spawn(
+            (Node {
+                width: percent(100),
+                // height: percent(100),
+                top: percent(0),
+                left: percent(5),
+                justify_content: JustifyContent::Start,
+                ..Default::default()
+            }),
+        )
+        .with_child((
+            ScoreGui,
+            Text::new("Test"),
+            TextColor(Color::srgb(1.0, 1.0, 1.0)),
+
+        ));
+
+    // commands.spawn((
+    //     // Transform::from_xyz(0.0,0.0,10.0),
+    //     ScoreGui,
+    //     Text::new("Test"),
+    //     TextColor(Color::srgb(1.0, 1.0, 1.0)),
+    //     // TextLayout::new_with_justify(Justify::Center).with_no_wrap(),
+    // ));
 }
-
-
 
 // fn mouseclick_to_circle_summon(
 //     time: Res<Time>,
@@ -102,11 +116,7 @@ fn setup_world(
 
 use crate::osuparser::{OsuBeatmap, Point};
 
-
-
 mod mouse_pos_system;
-
-
 
 fn main() {
     // osuparser::parse_osu_file(Path::new("bad_apple.osu")).unwrap();
@@ -122,7 +132,6 @@ fn main() {
         }),
         ..Default::default()
     }));
-
 
     app.add_plugins(mouse_pos_system::MousePosPlugin);
 
@@ -157,7 +166,7 @@ fn main() {
             circles::sliders::draw_from_points,
             circles::sliders::remove_line,
             circles::sliders::move_slider,
-            circles::scoring::score_system
+            circles::scoring::score_system,
         ),
     );
 

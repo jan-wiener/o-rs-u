@@ -201,7 +201,7 @@ impl ScoreInfo {
                 }
             }
         }
-        self.hit_score.len() as f32 / accuracy_sum
+        accuracy_sum / (self.hit_score.len() as f32)
     }
 }
 
@@ -240,3 +240,5 @@ impl AddScore {
 
 
 
+#[derive(Component)]
+pub struct ScoreGui;
