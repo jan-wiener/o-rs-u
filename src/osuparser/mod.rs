@@ -125,7 +125,7 @@ impl OsuHitObject {
 
             *(&mut length) = etc::vec_vec2_len(&key_points);
             let steps = length / 10.0;
-            println!("{:?}", key_points);
+            // println!("{:?}", key_points);
             for (idx, key_point) in key_points.iter().enumerate() {
                 if idx.checked_sub(1).is_some()
                     && let Some(last) = key_points.get(idx - 1)
@@ -134,7 +134,7 @@ impl OsuHitObject {
                     let seg_steps = seg_length / length * steps;
                     let seg_step_length = seg_length / seg_steps;
 
-                    println!("{}, {}, {}", seg_length, seg_steps, seg_step_length);
+                    // println!("{}, {}, {}", seg_length, seg_steps, seg_step_length);
 
                     let mut seg_length_covered = 0.0;
                     let mut next = last.clone();
@@ -143,7 +143,7 @@ impl OsuHitObject {
                         next = next + step;
                         seg_length_covered += step.length();
                         if seg_length_covered > seg_length {
-                            println!("broken");
+                            // println!("broken");
                             break;
                         }
                         points_inner.push(next);
@@ -249,7 +249,7 @@ impl OsuHitObject {
                     end_control_middle,
                     end_control_perpendicular.normalize(),
                 ) else {
-                    println!("Break, line fail");
+                    warn!("'Perfect Circle' line fail, slider converted to linear");
                     linear();
                     break 'pc;
                 };
@@ -276,19 +276,19 @@ impl OsuHitObject {
                 // );
                 // println!("alpha: {alpha}; beta: {beta}; gamma: {gamma}");
                 // println!("pos: {:?}, center: {:?}", start, center);
-                println!("Current: {} | gamma: {}", norm_angle(current.to_angle()), gamma); 
+                // println!("Current: {} | gamma: {}", norm_angle(current.to_angle()), gamma); 
                 let angle_step = PI / radius;
                 let mut current_angle = alpha;
                 
                 if counter_clockwise {
-                    println!("delta bigger");
+                    // println!("delta bigger");
                     while ccw_diff(current_angle, gamma) > angle_step {
                         current_angle += angle_step;
                         current = current.rotate(Vec2::from_angle(angle_step));
                         points_inner.push(center + current.clone());
                     }
                 } else {
-                    println!("delta smaller");
+                    // println!("delta smaller");
                     while ccw_diff(gamma, current_angle) > angle_step {
                         current_angle -= angle_step;
                         current = current.rotate(Vec2::from_angle(-angle_step));
@@ -301,7 +301,7 @@ impl OsuHitObject {
         }
         // println!("{}", osu.get_time_to_complete_slider(length));
         // length = vec_vec2_len(&points_inner);
-        println!("Points inner: {:?}", points_inner);
+        // println!("Points inner: {:?}", points_inner);
         self.points = Some(points_inner);
         self.length = length;
     }
@@ -412,7 +412,6 @@ impl OsuBeatmap {
                    //500000 * Math.Pow(Accuracy.Value, 5) * accuracyProgress +
                    //bonusPortion;
     pub fn calculate_score(&self, combo: usize, accuracy: f32, elapsed_objects: usize) -> usize {
-        // ((700000.0 * (combo as f32) / (self.max_combo as f32)) + (300000.0 * accuracy.powi(10) * (elapsed_objects as f32) / (self.hit_objects.len() as f32) )) as usize
         let accuracy_progress = (elapsed_objects as f32) / (self.hit_objects.len() as f32);
         let combo_progress = (combo as f32) / (self.max_combo as f32);
         (500000.0 * accuracy * combo_progress + 500000.0 * accuracy.powi(5) * accuracy_progress) as usize
@@ -463,7 +462,7 @@ impl OsuBeatmap {
         
 
         for osuhitobj_idx in 0..self.hit_objects.len() {
-            println!("{:?}", self.hit_objects[osuhitobj_idx]);
+            // println!("{:?}", self.hit_objects[osuhitobj_idx]);
             if let OsuHitObjectType::Slider(_) = self.hit_objects[osuhitobj_idx].hitobjecttype {
                 // println!("Slider points: {:?}", self.hit_objects[osuhitobj_idx].points);
                 let tick_interval = (self.get_beat_length((self.hit_objects[osuhitobj_idx].time*1000.0) as i32) / 1000.0) / self.difficulty.slider_tick_rate;
@@ -496,20 +495,20 @@ impl OsuBeatmap {
                 if ticks.len() > 0 && vec_vec2_len(&points[ticks.last().unwrap().to_owned()..points.len()]) < (length_per_tick / 7.5) {
                     ticks.pop();
                 }
-                println!("len: {} | lpt: {} | ticks: {}", self.hit_objects[osuhitobj_idx].length, length_per_tick, ticks.len());
+                // println!("len: {} | lpt: {} | ticks: {}", self.hit_objects[osuhitobj_idx].length, length_per_tick, ticks.len());
 
                 self.hit_objects[osuhitobj_idx].ticks = Some(ticks);
             }
         }
 
 
-        let mut ticks = 0;
-        for osuhitobj in &self.hit_objects {
-            if let OsuHitObjectType::Slider(_) = osuhitobj.hitobjecttype {
-                ticks += osuhitobj.ticks.as_ref().unwrap().len() * osuhitobj.slides;
-            }
-        }
-        println!("Ticks: {}", ticks);
+        // let mut ticks = 0;
+        // for osuhitobj in &self.hit_objects {
+        //     if let OsuHitObjectType::Slider(_) = osuhitobj.hitobjecttype {
+        //         ticks += osuhitobj.ticks.as_ref().unwrap().len() * osuhitobj.slides;
+        //     }
+        // }
+        // println!("Ticks: {}", ticks);
         
         // println!("Max Combo: {}", self.calc_max_combo());
         self.max_combo = self.calc_max_combo();
@@ -651,7 +650,7 @@ pub fn parse_osu_file(p: &Path) -> std::io::Result<OsuBeatmap> {
     for timing_point_string_vec in timing_points_split {
         // let mut timing_point: OsuTimingPoint = OsuTimi
         let mut x: (i32, f32, i32, i32, i32, i32, bool, i32) = (0, 0.0, 0, 0, 0, 0, false, 0);
-        println!("timing point {:?}", timing_point_string_vec);
+        // println!("timing point {:?}", timing_point_string_vec);
         for (i, item) in timing_point_string_vec.into_iter().enumerate() {
             if i == 1 {
                 *(x.get_field_mut(i).unwrap()) = item.parse::<f32>().unwrap();

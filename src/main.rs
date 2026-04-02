@@ -1,3 +1,4 @@
+use bevy::audio::Source;
 use bevy::prelude::*;
 
 mod beatmaps;
@@ -38,7 +39,7 @@ fn setup_world(
     let mred = MeshMaterial2d(materials.add(Color::srgb(1.0, 0.0, 0.0)));
     let mwhite = MeshMaterial2d(materials.add(Color::srgb(1.0, 1.0, 1.0)));
 
-    let circle_asset = assets.load("circle.png");
+    let circle_asset = assets.load("skins/circle.png");
     let mut m = ColorMaterial::default();
     m.texture = Some(circle_asset);
 
@@ -76,9 +77,21 @@ fn setup_world(
 
     commands.spawn((s, Transform::from_xyz(0.0, 0.0, 0.0)));
 
+
+
+    let default_audio_source = assets.add(AudioSource { bytes: std::sync::Arc::new([]) });
+
+    commands.spawn((
+        GameAudio,
+        AudioPlayer::new(default_audio_source),
+        PlaybackSettings::ONCE.paused()
+    ));
+
     load_bmap_msg.write(LoadBeatmap {
-        path: "o.osu".into(),
+        path: "./assets/beatmaps/bad_apple.osu".into(),
+        audio: "beatmaps/audio.mp3".into(),
     });
+
 
     commands
         .spawn(
@@ -179,8 +192,11 @@ fn main() {
 
     app.add_plugins(DefaultPlugins.set(WindowPlugin {
         primary_window: Some(Window {
-            resolution:
-                bevy_window::WindowResolution::new(1920, 1080).with_scale_factor_override(1.0),
+            // resolution:
+            //     bevy_window::WindowResolution::new(1920, 1080).with_scale_factor_override(1.0),
+            resolution: bevy_window::WindowResolution::new(500,500).with_scale_factor_override(1.0),
+            mode: bevy_window::WindowMode::BorderlessFullscreen(MonitorSelection::Current),
+            present_mode: bevy_window::PresentMode::AutoNoVsync,
             ..Default::default()
         }),
         ..Default::default()
@@ -214,19 +230,22 @@ fn main() {
         (
             circles::rings::shrink_ring,
             circles::summon_circle,
-            circles::clicking::circle_click,
+            circles::clicking::circle_click.before(circles::sliders::move_slider),
             
             beatmaps::load_osu_beatmap,
             beatmaps::beatmap_worker,
             circles::sliders::draw_from_points,
             circles::sliders::remove_line,
-            (circles::sliders::move_slider, circles::clicking::remove_circle).chain(),
+            circles::sliders::move_slider.before(circles::clicking::remove_circle),
+            circles::clicking::remove_circle,
             circles::scoring::score_system,
             circles::change_material_system,
             circles::sliders::tick_check,
 
             circles::sliders::draw_tick,
             circles::sliders::remove_tick,
+
+            beatmaps::play_audio,
 
         ),
     );

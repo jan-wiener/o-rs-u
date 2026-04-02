@@ -113,7 +113,7 @@ pub fn move_slider(
             continue;
         };
         // println!(" npos {}", new_pos_idx);
-        println!("t: {} || slides: {} || Ticks: {:?}", t, circleinfo.slides, circleinfo.ticks);
+        // println!("t: {} || slides: {} || Ticks: {:?}", t, circleinfo.slides, circleinfo.ticks);
         
         for i in circleinfo.last_pos_idx..new_pos_idx {
             if circleinfo.ticks.as_ref().unwrap().contains(&i) {
@@ -130,7 +130,6 @@ pub fn move_slider(
             };
             tick_check.write(TickCheck { trpos: p, tick_type: TickType::SliderRepeat });
             circleinfo.slides_completed += 1;
-            println!("-----\n\n\n\n");
         }
         circleinfo.last_pos_idx = new_pos_idx;
 

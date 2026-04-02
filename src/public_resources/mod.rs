@@ -153,6 +153,7 @@ pub struct SliderTick {
 #[derive(Message)]
 pub struct LoadBeatmap {
     pub path: String,
+    pub audio: String,
 }
 
 #[derive(Resource, Default)]
@@ -345,4 +346,9 @@ pub struct TickCheck {
     pub trpos: Vec2,
     pub tick_type: TickType,
 }
+
+
+
+#[derive(Component)]
+pub struct GameAudio;
 
