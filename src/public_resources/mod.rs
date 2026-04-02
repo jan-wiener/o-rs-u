@@ -39,7 +39,11 @@ pub struct CircleInfo {
 
     pub points: Option<Vec<Vec2>>,
     pub segments: Option<usize>,
-    pub slides: u32,
+    pub slides: usize,
+
+    pub slides_completed: usize,
+    pub last_pos_idx: usize,
+    pub ticks: Option<Vec<usize>>,
 
     pub original_pos: Vec2,
 
@@ -55,6 +59,9 @@ impl Default for CircleInfo {
             circle_type: OsuHitObjectType::Circle(false),
             points: None,
             size: 0.0,
+            last_pos_idx: 0,
+            slides_completed: 0,
+            ticks: None,
             moment_t: 0.0,
             segments: None,
             original_pos: Vec2::default(),
@@ -125,8 +132,20 @@ pub struct DrawLine {
     pub lifetime: f32,
 }
 
+#[derive(Message)]
+pub struct DrawTick {
+    pub trpos: Vec2,
+    pub lifetime: f32,
+}
+
+
 #[derive(Component)]
 pub struct SliderLine {
+    pub timer: Timer,
+}
+
+#[derive(Component)]
+pub struct SliderTick {
     pub timer: Timer,
 }
 
@@ -164,6 +183,11 @@ pub enum HitScore {
     Ok,
     Meh,
     Miss,
+    SliderTickHit,
+    SliderRepeatHit,
+    SliderEndHit,
+    ComboMiss,
+
 }
 
 
@@ -181,6 +205,27 @@ impl HitScore {
 
     }
 
+    pub fn affects_accuracy(&self) -> bool {
+        match self {
+            Self::Great | Self::Ok | Self::Meh | Self::Miss => {
+                true
+            },
+            _ => {
+                false
+            }
+        }
+    }
+    pub fn is_miss(&self) -> bool {
+        match self {
+            Self::Miss | Self::ComboMiss => {
+                true
+            },
+            _ => {
+                false
+            }
+        }
+    }
+
     pub fn to_number(&self) -> i32 {
         let mut score = 0;
         match self {
@@ -193,9 +238,15 @@ impl HitScore {
             HitScore::Meh => {
                 score = 50;
             },
-            HitScore::Miss => {
+            HitScore::Miss | HitScore::ComboMiss => {
                 score = 0;
             },
+            HitScore::SliderTickHit => {
+                score = 10;
+            },
+            HitScore::SliderRepeatHit | HitScore::SliderEndHit => {
+                score = 30;
+            }
         }
         score
     }
@@ -227,7 +278,8 @@ impl ScoreInfo {
                 },
                 HitScore::Miss => {
                     // no add
-                }
+                },
+                _ => {}
             }
         }
         accuracy_sum / (self.hit_score.len() as f32)
@@ -261,17 +313,36 @@ pub struct ScoreGui;
 #[derive(Component)]
 pub struct AccuracyGui;
 
+#[derive(Component)]
+pub struct ComboGui;
+
 
 pub enum TickType {
     SliderTick,
     SliderEnd,
+    SliderRepeat
+}
+impl TickType {
+    pub fn to_hit_score(&self) -> HitScore {
+        match self {
+            Self::SliderTick => {
+                HitScore::SliderTickHit
+            },
+            Self::SliderRepeat => {
+                HitScore::SliderRepeatHit
+            },
+            Self::SliderEnd => {
+                HitScore::SliderEndHit
+            }
+        }
+    }
 }
 
 
 
 #[derive(Message)]
 pub struct TickCheck {
-    trpos: Vec2,
-    tick_type: TickType,
+    pub trpos: Vec2,
+    pub tick_type: TickType,
 }
 

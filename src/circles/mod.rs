@@ -21,6 +21,7 @@ pub fn summon_circle(
     window: Single<&Window>,
     mut circles_to_summon: ResMut<Messages<OsuHitObject>>,
     mut drawline_writer: MessageWriter<DrawLine>,
+    mut drawtickwriter: MessageWriter<DrawTick>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -41,18 +42,25 @@ pub fn summon_circle(
 
         // let size = osu.get_real_circle_size(window.size());
         let points: Option<Vec<Vec2>> = osuhitobj.points;
+        let ticks = osuhitobj.ticks;
         let segments: Option<usize> = None;
-        let slides: u32 = 1;
+        let slides = osuhitobj.slides;
 
         match osuhitobj.hitobjecttype {
             OsuHitObjectType::Slider(_) => {
+                let lifetime = osu.get_time_to_complete_slider(osuhitobj.length, time_since_start)
+                        * slides as f32
+                        + osu.real_approach_time;
+                for tick_idx in ticks.as_ref().unwrap() {
+                    let tick_pos = points.as_ref().unwrap()[*tick_idx];
+                    drawtickwriter.write(DrawTick { trpos: tick_pos.clone(), lifetime });
+                }   
+
                 // println!("Ticks: {:?}", osuhitobj.ticks.unwrap());
                 // println!("Len: {}", osuhitobj.length);
                 drawline_writer.write(DrawLine {
                     points: points.clone().unwrap(),
-                    lifetime: osu.get_time_to_complete_slider(osuhitobj.length, time_since_start)
-                        * slides as f32
-                        + osu.real_approach_time,
+                    lifetime,
                 });
             }
             _ => {}
@@ -73,11 +81,14 @@ pub fn summon_circle(
                 moment_t: osuhitobj.time,
                 original_pos: pos,
                 clicked: false,
+                ticks,
                 size: osu.get_real_circle_size(),
                 circle_type: osuhitobj.hitobjecttype,
                 points,
                 segments,
                 slides,
+                slides_completed: 0,
+                last_pos_idx: 0,
             },
         ));
 
@@ -96,33 +107,16 @@ pub fn summon_circle(
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 pub fn change_material_system(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    mut query: Query<(&mut MeshMaterial2d<ColorMaterial>,&CircleInfo)>,
+    mut query: Query<(&mut MeshMaterial2d<ColorMaterial>, &CircleInfo)>,
     mut bmw: Res<BeatmapWorkerInfo>,
     time: Res<Time>,
     osu: Res<OsuBeatmap>,
     circlemats: Res<CircleMaterials>,
-
-
-
 ) {
     for (mut material_handle, circleinfo) in &mut query {
-
-        
         // let Some(material) = materials.get_mut(material_handle.0.id()) else {
         //     error!("Material not found!");
         //     continue;
@@ -133,22 +127,17 @@ pub fn change_material_system(
         match result {
             HitScore::Miss => {
                 *material_handle = circlemats.main_mat.clone();
-            },
+            }
             HitScore::Meh => {
                 *material_handle = circlemats.meh_mat.clone();
-            },
+            }
             HitScore::Ok => {
                 *material_handle = circlemats.ok_mat.clone();
             }
             HitScore::Great => {
                 *material_handle = circlemats.great_mat.clone();
-
-            },
-            
+            }
+            _ => {}
         }
-
-
-        
-        
     }
 }

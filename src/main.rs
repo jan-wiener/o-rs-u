@@ -77,7 +77,7 @@ fn setup_world(
     commands.spawn((s, Transform::from_xyz(0.0, 0.0, 0.0)));
 
     load_bmap_msg.write(LoadBeatmap {
-        path: "bad_apple.osu".into(),
+        path: "o.osu".into(),
     });
 
     commands
@@ -115,6 +115,26 @@ fn setup_world(
             AccuracyGui,
             Text::new("Accuracy: "),
             TextFont::from_font_size(50.0),
+            TextColor(Color::srgb(1.0, 1.0, 1.0)),
+
+        ));
+    
+    commands
+        .spawn(
+            (Node {
+                width: percent(100),
+                height: percent(5),
+                top: percent(85),
+                left: percent(2),
+                justify_content: JustifyContent::Start,
+                align_content: AlignContent::End,
+                ..Default::default()
+            }),
+        )
+        .with_child((
+            ComboGui,
+            Text::new("Combo: "),
+            TextFont::from_font_size(40.0),
             TextColor(Color::srgb(1.0, 1.0, 1.0)),
 
         ));
@@ -177,6 +197,7 @@ fn main() {
     app.add_message::<StartMovingSlider>();
     app.add_message::<AddScore>();
     app.add_message::<TickCheck>();
+    app.add_message::<DrawTick>();
 
     app.init_gizmo_group::<LineGizmos>();
 
@@ -194,14 +215,19 @@ fn main() {
             circles::rings::shrink_ring,
             circles::summon_circle,
             circles::clicking::circle_click,
-            circles::clicking::remove_circle,
+            
             beatmaps::load_osu_beatmap,
             beatmaps::beatmap_worker,
             circles::sliders::draw_from_points,
             circles::sliders::remove_line,
-            circles::sliders::move_slider,
+            (circles::sliders::move_slider, circles::clicking::remove_circle).chain(),
             circles::scoring::score_system,
             circles::change_material_system,
+            circles::sliders::tick_check,
+
+            circles::sliders::draw_tick,
+            circles::sliders::remove_tick,
+
         ),
     );
 

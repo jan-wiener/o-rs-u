@@ -7,8 +7,8 @@ pub enum OsuHitObjectType {
     Circle(bool),
     Slider(bool),
     Spinner(bool),
-    Tick,
-    SliderEnd,
+    // Tick,
+    // SliderEnd,
 
 }
 impl Default for OsuHitObjectType {
