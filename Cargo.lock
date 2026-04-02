@@ -2379,15 +2379,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fake-osu"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy_window",
- "rand 0.10.0",
-]
-
-[[package]]
 name = "fastrand"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3496,6 +3487,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "o-rs-u"
+version = "0.1.1"
+dependencies = [
+ "bevy",
+ "bevy_window",
+ "rand 0.10.0",
 ]
 
 [[package]]
