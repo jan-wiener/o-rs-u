@@ -27,7 +27,7 @@ pub fn shrink_ring(
             let mut circle = circle_q.get_mut(ch.parent()).unwrap();
             circle.clicked = true;
 
-            add_score_msg.write(AddScore::from_hit_score(&HitScore::Miss));
+            add_score_msg.write(AddScore::new(HitScore::Miss));
             
 
             match circle.circle_type {

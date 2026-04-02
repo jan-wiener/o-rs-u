@@ -4,6 +4,17 @@ use crate::osuparser::*;
 use crate::vec_vec2_len;
 
 
+pub fn tick_check(
+    mut tick_check: ResMut<Messages<TickCheck>>,
+    mouse_info: Res<MouseInfo>,
+    mouse_button: Res<ButtonInput<MouseButton>>,
+) {
+    for tick in tick_check.drain() {
+            
+    }
+
+}
+
 
 
 
@@ -120,3 +131,7 @@ pub fn remove_line(time: Res<Time>, q: Query<(&mut SliderLine, Entity)>, mut com
         }
     }
 }
+
+
+
+

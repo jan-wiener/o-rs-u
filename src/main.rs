@@ -38,14 +38,24 @@ fn setup_world(
     let mred = MeshMaterial2d(materials.add(Color::srgb(1.0, 0.0, 0.0)));
     let mwhite = MeshMaterial2d(materials.add(Color::srgb(1.0, 1.0, 1.0)));
 
-    // let circle_asset = assets.load("circle.png");
+    let circle_asset = assets.load("circle.png");
     let mut m = ColorMaterial::default();
-    // m.texture = Some(circle_asset);
-    let mcircle = MeshMaterial2d(materials.add(m));
+    m.texture = Some(circle_asset);
+
+    let main_mat = MeshMaterial2d(materials.add(ColorMaterial::default()));
+    
+    let meh_mat = MeshMaterial2d(materials.add(ColorMaterial::from_color(Color::srgb(1.0, 0.65, 0.0))));
+    let ok_mat = MeshMaterial2d(materials.add(ColorMaterial::from_color(Color::srgb(1.0, 1.0, 0.0))));
+    let great_mat = MeshMaterial2d(materials.add(ColorMaterial::from_color(Color::srgb(0.6, 1.0, 0.0))));
+
+
 
     commands.insert_resource(CircleMaterials {
+        meh_mat,
+        ok_mat,
+        great_mat,
         main: circle_mesh,
-        main_mat: mcircle,
+        main_mat,
         ring: circle_ring_mesh,
         ring_mat: mwhite,
     });
@@ -67,26 +77,49 @@ fn setup_world(
     commands.spawn((s, Transform::from_xyz(0.0, 0.0, 0.0)));
 
     load_bmap_msg.write(LoadBeatmap {
-        path: "o.osu".into(),
+        path: "bad_apple.osu".into(),
     });
 
     commands
         .spawn(
             (Node {
                 width: percent(100),
-                // height: percent(100),
-                top: percent(0),
-                left: percent(5),
+                height: percent(5),
+                top: percent(5),
+                left: percent(2),
                 justify_content: JustifyContent::Start,
+                align_content: AlignContent::Start,
                 ..Default::default()
             }),
         )
         .with_child((
             ScoreGui,
-            Text::new("Test"),
+            Text::new("Score: "),
+            TextFont::from_font_size(50.0),
             TextColor(Color::srgb(1.0, 1.0, 1.0)),
 
         ));
+    commands
+        .spawn(
+            (Node {
+                width: percent(100),
+                height: percent(5),
+                top: percent(90),
+                left: percent(2),
+                justify_content: JustifyContent::Start,
+                align_content: AlignContent::End,
+                ..Default::default()
+            }),
+        )
+        .with_child((
+            AccuracyGui,
+            Text::new("Accuracy: "),
+            TextFont::from_font_size(50.0),
+            TextColor(Color::srgb(1.0, 1.0, 1.0)),
+
+        ));
+
+
 
     // commands.spawn((
     //     // Transform::from_xyz(0.0,0.0,10.0),
@@ -143,6 +176,7 @@ fn main() {
     app.add_message::<DrawLine>();
     app.add_message::<StartMovingSlider>();
     app.add_message::<AddScore>();
+    app.add_message::<TickCheck>();
 
     app.init_gizmo_group::<LineGizmos>();
 
@@ -167,6 +201,7 @@ fn main() {
             circles::sliders::remove_line,
             circles::sliders::move_slider,
             circles::scoring::score_system,
+            circles::change_material_system,
         ),
     );
 

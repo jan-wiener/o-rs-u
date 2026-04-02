@@ -42,7 +42,7 @@ pub fn circle_click(
 
 
 
-    println!("Clicked");
+    // println!("Clicked");
 
 
     let mut potential_entities: Vec<(Entity, f32)> = Vec::new();
@@ -74,8 +74,8 @@ pub fn circle_click(
 
         //   Score = Hit Value + (Hit Value * ((Combo multiplier * Difficulty multiplier * Mod multiplier) / 25))
         
-        add_score_msg.write(AddScore::from_hit_score(&result));
-        score.hit_score.push(result);
+        add_score_msg.write(AddScore::new(result));
+        
 
 
         match circleinfo.circle_type {

@@ -75,6 +75,16 @@ pub struct RemoveCircle {
 pub struct CircleMaterials {
     pub main: Mesh2d,
     pub main_mat: MeshMaterial2d<ColorMaterial>,
+
+    // pub meh: Option<Mesh2d>,
+    pub meh_mat: MeshMaterial2d<ColorMaterial>,
+
+    // pub ok: Option<Mesh2d>,
+    pub ok_mat: MeshMaterial2d<ColorMaterial>,
+
+    // pub great: Option<Mesh2d>,
+    pub great_mat: MeshMaterial2d<ColorMaterial>,
+
     pub ring: Mesh2d,
     pub ring_mat: MeshMaterial2d<ColorMaterial>,
 }
@@ -148,7 +158,7 @@ pub struct GeneralInfo {
 }
 
 
-
+#[derive(Clone)]
 pub enum HitScore {
     Great,
     Ok,
@@ -169,6 +179,25 @@ impl HitScore {
             Self::Miss
         }
 
+    }
+
+    pub fn to_number(&self) -> i32 {
+        let mut score = 0;
+        match self {
+            HitScore::Great => {
+                score = 300;
+            },
+            HitScore::Ok => {
+                score = 100;
+            },
+            HitScore::Meh => {
+                score = 50;
+            },
+            HitScore::Miss => {
+                score = 0;
+            },
+        }
+        score
     }
 }
 
@@ -212,28 +241,14 @@ impl ScoreInfo {
 
 #[derive(Message)]
 pub struct AddScore {
-    pub score: isize,
+    pub score: HitScore,
 }
 
 
 //Score = ((700000 * combo_bonus / max_combo_bonus) + (300000 * ((accuracy_percentage / 100) ^ 10) * elapsed_objects / total_objects) + spinner_bonus) * mod_multiplier
 impl AddScore {
-    pub fn from_hit_score(hit_score: &HitScore) -> Self {
-        let mut score = 0;
-        match hit_score {
-            HitScore::Great => {
-                score = 300;
-            },
-            HitScore::Ok => {
-                score = 100;
-            },
-            HitScore::Meh => {
-                score = 50;
-            },
-            HitScore::Miss => {
-                score = 0;
-            },
-        }
+    
+    pub fn new(score: HitScore) -> Self {
         Self {score}
     }
 }
@@ -242,3 +257,21 @@ impl AddScore {
 
 #[derive(Component)]
 pub struct ScoreGui;
+
+#[derive(Component)]
+pub struct AccuracyGui;
+
+
+pub enum TickType {
+    SliderTick,
+    SliderEnd,
+}
+
+
+
+#[derive(Message)]
+pub struct TickCheck {
+    trpos: Vec2,
+    tick_type: TickType,
+}
+

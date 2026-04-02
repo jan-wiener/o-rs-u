@@ -7,6 +7,9 @@ pub enum OsuHitObjectType {
     Circle(bool),
     Slider(bool),
     Spinner(bool),
+    Tick,
+    SliderEnd,
+
 }
 impl Default for OsuHitObjectType {
     fn default() -> Self {
@@ -222,7 +225,7 @@ impl OsuHitObject {
                 // }
                 // println!("{:?}", points_inner);
             }
-            CurveType::PerfectCircle => {
+            CurveType::PerfectCircle => 'pc: {
                 let key_points = slider_info.trcurve_points.clone();
                 // println!("key points: {:?}", key_points);
                 let start = key_points[0];
@@ -248,7 +251,7 @@ impl OsuHitObject {
                 ) else {
                     println!("Break, line fail");
                     linear();
-                    return;
+                    break 'pc;
                 };
 
                 let radius = center.distance(start);
@@ -405,8 +408,14 @@ impl OsuBeatmap {
 
     //Score = ((700000 * combo_bonus / max_combo_bonus) + (300000 * ((accuracy_percentage / 100) ^ 10) * elapsed_objects / total_objects) + spinner_bonus) * mod_multiplier
 
+    //return 500000 * Accuracy.Value * comboProgress +
+                   //500000 * Math.Pow(Accuracy.Value, 5) * accuracyProgress +
+                   //bonusPortion;
     pub fn calculate_score(&self, combo: usize, accuracy: f32, elapsed_objects: usize) -> usize {
-        ((700000.0 * (combo as f32) / (self.max_combo as f32)) + (300000.0 * accuracy.powi(10) * (elapsed_objects as f32) / (self.hit_objects.len() as f32) )) as usize
+        // ((700000.0 * (combo as f32) / (self.max_combo as f32)) + (300000.0 * accuracy.powi(10) * (elapsed_objects as f32) / (self.hit_objects.len() as f32) )) as usize
+        let accuracy_progress = (elapsed_objects as f32) / (self.hit_objects.len() as f32);
+        let combo_progress = (combo as f32) / (self.max_combo as f32);
+        (500000.0 * accuracy * combo_progress + 500000.0 * accuracy.powi(5) * accuracy_progress) as usize
     }
     
     pub fn calc_max_combo(&self) -> usize {

@@ -95,3 +95,60 @@ pub fn summon_circle(
         ));
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+pub fn change_material_system(
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut query: Query<(&mut MeshMaterial2d<ColorMaterial>,&CircleInfo)>,
+    mut bmw: Res<BeatmapWorkerInfo>,
+    time: Res<Time>,
+    osu: Res<OsuBeatmap>,
+    circlemats: Res<CircleMaterials>,
+
+
+
+) {
+    for (mut material_handle, circleinfo) in &mut query {
+
+        
+        // let Some(material) = materials.get_mut(material_handle.0.id()) else {
+        //     error!("Material not found!");
+        //     continue;
+        // };
+        let delta = (bmw.get_time_since_start(time.elapsed_secs()) - circleinfo.moment_t).abs();
+        let result = HitScore::from_delta(delta, &osu.real_hit_window);
+
+        match result {
+            HitScore::Miss => {
+                *material_handle = circlemats.main_mat.clone();
+            },
+            HitScore::Meh => {
+                *material_handle = circlemats.meh_mat.clone();
+            },
+            HitScore::Ok => {
+                *material_handle = circlemats.ok_mat.clone();
+            }
+            HitScore::Great => {
+                *material_handle = circlemats.great_mat.clone();
+
+            },
+            
+        }
+
+
+        
+        
+    }
+}
