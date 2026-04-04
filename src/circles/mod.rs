@@ -6,11 +6,16 @@ pub mod rings;
 pub mod scoring;
 pub mod sliders;
 
+use crate::SVG_MODE;
+use crate::WORLD_BG;
+use crate::WORLD_FG;
 use crate::circles::catmull::*;
 use crate::circles::etc::*;
 use crate::osuparser::*;
 use crate::public_resources::*;
 use bevy::prelude::*;
+use bevy_vello::prelude::VelloSvg2d;
+use bevy_vello::prelude::VelloSvgAnchor;
 
 use crate::CIRCLE_VISUAL_MULTIPLIER;
 use std::f32::consts::PI;
@@ -70,13 +75,16 @@ pub fn summon_circle(
         let radius = osu.get_real_circle_size() / general_info.real_circle_radius;
 
         let mut circletr =
-            Transform::from_translation(pos.extend(900.0 - (time.elapsed_secs() / 1000.0)));
-        circletr.scale = Vec3::splat(radius * CIRCLE_VISUAL_MULTIPLIER);
+            Transform::from_translation(pos.extend(900.0 - ((time.elapsed_secs() - bmw.started_at) / 1000.0)));
+        circletr.scale = Vec3::splat(radius * CIRCLE_VISUAL_MULTIPLIER );
         // println!("CIRCLE tr: {}", circletr.translation);
 
         let mut centcmds = commands.spawn((
             circlemats.main.clone(),
             circlemats.main_mat.clone(),
+
+            
+
             circletr,
             CircleInfo {
                 moment_t: osuhitobj.time,
@@ -93,6 +101,16 @@ pub fn summon_circle(
             },
         ));
 
+        if SVG_MODE {
+            centcmds.with_child((
+            VelloSvg2d(circlemats.main_svg.clone()),
+            VelloSvgAnchor::Center,
+            Transform::from_scale(Vec3::splat(1.1)),
+            WORLD_FG
+        ));
+        }
+        
+
         // let mut tr = Transform::from_translation(ring.pos.extend(1.0));
         let mut tr = Transform::from_translation(Vec3::splat(0.0));
         tr.scale = Vec3::splat(2.0);
@@ -104,6 +122,7 @@ pub fn summon_circle(
             circlemats.ring_mat.clone(),
             tr,
             ring,
+            WORLD_BG
         ));
     }
 }

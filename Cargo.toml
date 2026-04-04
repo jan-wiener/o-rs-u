@@ -1,9 +1,11 @@
 [package]
 name = "o-rs-u"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 
 [dependencies]
 bevy = {version="0.18.1", features=["mp3", "flac", "wav"]}
 rand = "0.10.0"
 bevy_window = "0.18.1"
+bevy_vello = {version="0.13.1", features = ["svg"]}
+

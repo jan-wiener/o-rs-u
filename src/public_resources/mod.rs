@@ -77,6 +77,7 @@ pub struct RemoveCircle {
     pub entity: Entity,
 }
 
+use bevy_vello::prelude::VelloSvg;
 
 #[derive(Resource)]
 pub struct CircleMaterials {
@@ -94,6 +95,8 @@ pub struct CircleMaterials {
 
     pub ring: Mesh2d,
     pub ring_mat: MeshMaterial2d<ColorMaterial>,
+
+    pub main_svg: Handle<VelloSvg>,
 }
 
 
@@ -351,4 +354,12 @@ pub struct TickCheck {
 
 #[derive(Component)]
 pub struct GameAudio;
+
+
+
+#[derive(Component)]
+pub struct Cameraz0;
+
+#[derive(Component)]
+pub struct Cameraz2;
 

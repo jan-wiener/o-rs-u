@@ -12,6 +12,12 @@ use crate::public_resources::*;
 
 const CIRCLE_VISUAL_MULTIPLIER: f32 = 0.8;
 
+pub const WORLD_BG: RenderLayers = RenderLayers::layer(0);
+pub const WORLD_FG: RenderLayers = RenderLayers::layer(1);
+// pub const WORLD_FG_EXTRA: RenderLayers = RenderLayers::layer(2);
+
+pub const SVG_MODE: bool = false;
+
 fn setup_world(
     assets: Res<AssetServer>,
     mut commands: Commands,
@@ -22,7 +28,38 @@ fn setup_world(
     mut load_bmap_msg: MessageWriter<LoadBeatmap>,
     mut general_info: ResMut<GeneralInfo>,
 ) {
-    commands.spawn((Camera2d::default(), Transform::from_xyz(0.0, 0.0, 1000.0)));
+    commands.spawn((
+        Camera2d::default(), // replaces Camera2dBundle
+        Camera {
+            order: 0,
+            ..default()
+        },
+        WORLD_BG,
+        Cameraz0
+    ));
+
+    commands.spawn((
+        Camera2d::default(),
+        Camera {
+            order: 1,
+            clear_color: ClearColorConfig::None,
+            ..default()
+        },
+        WORLD_FG,
+        VelloView,
+    ));
+    // commands.spawn((
+    //     Camera2d::default(),
+    //     Camera {
+    //         order: 2,
+    //         clear_color: ClearColorConfig::None,
+    //         ..default()
+    //     },
+    //     WORLD_FG_EXTRA,
+    //     Cameraz2,
+    // ));
+
+    // commands.spawn((Camera2d::default(), Transform::from_xyz(0.0, 0.0, 1000.0), VelloView));
 
     // let sprite = Sprite::from_color();
 
@@ -32,7 +69,7 @@ fn setup_world(
     let circle_handle = meshes.add(circle);
     let circle_mesh = Mesh2d(circle_handle);
 
-    let circle_ring = circle.to_ring(2.0);
+    let circle_ring = circle.to_ring(4.0);
     let circle_ring_handle = meshes.add(circle_ring);
     let circle_ring_mesh = Mesh2d(circle_ring_handle);
 
@@ -43,12 +80,21 @@ fn setup_world(
     let mut m = ColorMaterial::default();
     m.texture = Some(circle_asset);
 
-    let main_mat = MeshMaterial2d(materials.add(ColorMaterial::default()));
-    
-    let meh_mat = MeshMaterial2d(materials.add(ColorMaterial::from_color(Color::srgb(1.0, 0.65, 0.0))));
-    let ok_mat = MeshMaterial2d(materials.add(ColorMaterial::from_color(Color::srgb(1.0, 1.0, 0.0))));
-    let great_mat = MeshMaterial2d(materials.add(ColorMaterial::from_color(Color::srgb(0.6, 1.0, 0.0))));
+    let alpha = 1.0;
+    m.color = Color::srgba(1.0,1.0,1.0,alpha);
 
+    let main_mat = MeshMaterial2d(materials.add(m.clone()));
+
+    m.color = Color::srgba(1.0, 0.65, 0.0, alpha);
+    let meh_mat = MeshMaterial2d(materials.add(m.clone()));
+
+    m.color = Color::srgba(1.0, 1.0, 0.0, alpha);
+    let ok_mat = MeshMaterial2d(materials.add(m.clone()));
+
+    m.color = Color::srgba(0.6, 1.0, 0.0, alpha);
+    let great_mat = MeshMaterial2d(materials.add(m));
+
+    let main_svg = assets.load("skins/circle.svg");
 
 
     commands.insert_resource(CircleMaterials {
@@ -59,6 +105,7 @@ fn setup_world(
         main_mat,
         ring: circle_ring_mesh,
         ring_mat: mwhite,
+        main_svg
     });
 
     let p = Point { x: 0, y: 0 };
@@ -75,7 +122,7 @@ fn setup_world(
         Vec2::new(512.0, 384.0) * (window.height() / 480.0),
     );
 
-    commands.spawn((s, Transform::from_xyz(0.0, 0.0, 0.0)));
+    // commands.spawn((s, Transform::from_xyz(0.0, 0.0, 0.0)));
 
 
 
@@ -88,8 +135,8 @@ fn setup_world(
     ));
 
     load_bmap_msg.write(LoadBeatmap {
-        path: "./assets/beatmaps/bad_apple.osu".into(),
-        audio: "beatmaps/audio.mp3".into(),
+        path: "./assets/beatmaps/mirage_hard.osu".into(),
+        audio: "beatmaps/audio.ogg".into(),
     });
 
 
@@ -181,6 +228,11 @@ fn setup_world(
 // }
 
 use crate::osuparser::{OsuBeatmap, Point};
+use bevy_vello::VelloPlugin;
+use bevy_vello::render::VelloView;
+use bevy::camera::visibility::RenderLayers;
+
+
 
 mod mouse_pos_system;
 
@@ -200,9 +252,20 @@ fn main() {
             ..Default::default()
         }),
         ..Default::default()
+    }).set(ImagePlugin {
+        default_sampler: bevy::image::ImageSamplerDescriptor {
+            mag_filter: bevy::image::ImageFilterMode::Linear,
+            min_filter: bevy::image::ImageFilterMode::Linear,
+            ..Default::default()
+        },
     }));
 
     app.add_plugins(mouse_pos_system::MousePosPlugin);
+
+    let mut vello = VelloPlugin::default();
+    vello.canvas_render_layers = WORLD_FG;
+    app.add_plugins(vello);
+
 
     app.insert_resource(Time::<Fixed>::from_hz(240.0));
 

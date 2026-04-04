@@ -16,7 +16,7 @@ fn mouse_position_system(
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     window: Single<&Window>,
     // mut posgui: Single<&mut Text, With<PosGUI>>,
-    camera_s: Single<&Transform, (With<Camera>)>,
+    camera_s: Single<&Transform, (With<Cameraz0>)>,
 ) {
     if let Some(cursor_pos) = window.cursor_position() {
         mouse_info.on_screen = true;
