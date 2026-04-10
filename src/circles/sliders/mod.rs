@@ -27,7 +27,10 @@ pub fn tick_check(
             missed = true;
         }
         if missed {
-            println!("MISSED A TICK");
+            // println!("MISSED A TICK");
+            if let TickType::SliderEnd = tick.tick_type {
+                continue;
+            }
             add_score_msg.write(AddScore::new(HitScore::ComboMiss));
         }
 

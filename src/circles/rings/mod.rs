@@ -22,7 +22,7 @@ pub fn shrink_ring(
         // println!("bmw time: {} | ring t: {} | realhitwindows s: {}", bmw.get_time_since_start(time.elapsed_secs()),ring.moment_t,osu.real_hit_window.score50);
         if tr.scale.x > 1.0 {
             // println!("Shrunk @ {}", time.elapsed_secs());
-            tr.scale -= Vec3::splat(1.0) * time.delta_secs() / osu.real_approach_time;
+            tr.scale -= Vec3::splat(1.15) * time.delta_secs() / osu.real_approach_time;
         } else if !ring.slider_mode && (bmw.get_time_since_start(time.elapsed_secs()) - ring.moment_t) > osu.real_hit_window.score50 {
             let mut circle = circle_q.get_mut(ch.parent()).unwrap();
             circle.clicked = true;

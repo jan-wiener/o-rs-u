@@ -9,7 +9,6 @@ pub enum OsuHitObjectType {
     Spinner(bool),
     // Tick,
     // SliderEnd,
-
 }
 impl Default for OsuHitObjectType {
     fn default() -> Self {
@@ -101,15 +100,14 @@ pub struct OsuHitObject {
     pub length: f32,
 }
 
-use crate::circles::etc;
 use crate::circles::bezier;
 use crate::circles::catmull;
-use std::f32::consts::PI;
+use crate::circles::etc;
 use crate::circles::etc::*;
+use std::f32::consts::PI;
 
 impl OsuHitObject {
     fn compute_points(&mut self) {
-
         let pos = self.trpos.expect("Not converted pos");
         let slider_info = self.slider_params.as_ref().unwrap();
 
@@ -185,7 +183,8 @@ impl OsuHitObject {
                 // println!("len: {}\nPoints: {:?}", length, points_inner);
             }
             CurveType::Centripetal => {
-                let spline = catmull::CentripetalCatmullRomSpline2d::new(&slider_info.trcurve_points);
+                let spline =
+                    catmull::CentripetalCatmullRomSpline2d::new(&slider_info.trcurve_points);
                 length = spline.length(10 / spline.segments.len());
                 let steps = (length / 10.0) as i32;
                 for step in (0..steps).map(|x| x as f32 / steps as f32) {
@@ -276,10 +275,10 @@ impl OsuHitObject {
                 // );
                 // println!("alpha: {alpha}; beta: {beta}; gamma: {gamma}");
                 // println!("pos: {:?}, center: {:?}", start, center);
-                // println!("Current: {} | gamma: {}", norm_angle(current.to_angle()), gamma); 
+                // println!("Current: {} | gamma: {}", norm_angle(current.to_angle()), gamma);
                 let angle_step = PI / radius;
                 let mut current_angle = alpha;
-                
+
                 if counter_clockwise {
                     // println!("delta bigger");
                     while ccw_diff(current_angle, gamma) > angle_step {
@@ -404,31 +403,30 @@ const DEFAULT_OSU_TIMING_POINT: OsuTimingPoint = OsuTimingPoint {
 };
 
 impl OsuBeatmap {
-
-
     //Score = ((700000 * combo_bonus / max_combo_bonus) + (300000 * ((accuracy_percentage / 100) ^ 10) * elapsed_objects / total_objects) + spinner_bonus) * mod_multiplier
 
     //return 500000 * Accuracy.Value * comboProgress +
-                   //500000 * Math.Pow(Accuracy.Value, 5) * accuracyProgress +
-                   //bonusPortion;
+    //500000 * Math.Pow(Accuracy.Value, 5) * accuracyProgress +
+    //bonusPortion;
     pub fn calculate_score(&self, combo: usize, accuracy: f32, elapsed_objects: usize) -> usize {
         let accuracy_progress = (elapsed_objects as f32) / (self.hit_objects.len() as f32);
         let combo_progress = (combo as f32) / (self.max_combo as f32);
-        (500000.0 * accuracy * combo_progress + 500000.0 * accuracy.powi(5) * accuracy_progress) as usize
+        (500000.0 * accuracy * combo_progress + 500000.0 * accuracy.powi(5) * accuracy_progress)
+            as usize
     }
-    
+
     pub fn calc_max_combo(&self) -> usize {
         let mut max_combo = 0;
         for osuhitobj in &self.hit_objects {
             match osuhitobj.hitobjecttype {
                 OsuHitObjectType::Slider(_) => {
                     max_combo += 2 + osuhitobj.ticks.as_ref().unwrap().len();
-                },
+                }
                 OsuHitObjectType::Circle(_) => {
                     max_combo += 1;
-                },
+                }
                 _ => {}
-            } 
+            }
         }
         max_combo
     }
@@ -459,27 +457,31 @@ impl OsuBeatmap {
         let diff_multiplier = (difficulty_points / 6.0).floor() + 2.0;
         self.difficulty_score_multiplier = diff_multiplier;
 
-        
-
         for osuhitobj_idx in 0..self.hit_objects.len() {
             // println!("{:?}", self.hit_objects[osuhitobj_idx]);
             if let OsuHitObjectType::Slider(_) = self.hit_objects[osuhitobj_idx].hitobjecttype {
                 // println!("Slider points: {:?}", self.hit_objects[osuhitobj_idx].points);
-                let tick_interval = (self.get_beat_length((self.hit_objects[osuhitobj_idx].time*1000.0) as i32) / 1000.0) / self.difficulty.slider_tick_rate;
+                let tick_interval = (self
+                    .get_beat_length((self.hit_objects[osuhitobj_idx].time * 1000.0) as i32)
+                    / 1000.0)
+                    / self.difficulty.slider_tick_rate;
 
                 self.hit_objects[osuhitobj_idx].compute_points();
 
                 // println!("-----");
                 // println!("Tick interval {}", tick_interval);
 
-                let ttc = self.get_time_to_complete_slider(self.hit_objects[osuhitobj_idx].length, (self.hit_objects[osuhitobj_idx].time * 1000.0) as i32);
-                let length_per_tick = self.hit_objects[osuhitobj_idx].length * (tick_interval / ttc);
+                let ttc = self.get_time_to_complete_slider(
+                    self.hit_objects[osuhitobj_idx].length,
+                    (self.hit_objects[osuhitobj_idx].time * 1000.0) as i32,
+                );
+                let length_per_tick =
+                    self.hit_objects[osuhitobj_idx].length * (tick_interval / ttc);
 
-
-                let mut passed_length = 0.0; 
+                let mut passed_length = 0.0;
                 let mut ticks: Vec<usize> = vec![];
                 let points = self.hit_objects[osuhitobj_idx].points.as_ref().unwrap();
-                
+
                 let mut last: &Vec2 = &points[0];
                 for (pidx, point) in points.iter().enumerate() {
                     // println!("dist: {} | l: {}", passed_length, (length_per_tick * ((ticks.len() + 1) as f32)));;
@@ -488,11 +490,12 @@ impl OsuBeatmap {
                     if passed_length > (length_per_tick * ((ticks.len() + 1) as f32)) {
                         ticks.push(pidx);
                     }
-
                 }
-                
 
-                if ticks.len() > 0 && vec_vec2_len(&points[ticks.last().unwrap().to_owned()..points.len()]) < (length_per_tick / 7.5) {
+                if ticks.len() > 0
+                    && vec_vec2_len(&points[ticks.last().unwrap().to_owned()..points.len()])
+                        < (length_per_tick / 7.5)
+                {
                     ticks.pop();
                 }
                 // println!("len: {} | lpt: {} | ticks: {}", self.hit_objects[osuhitobj_idx].length, length_per_tick, ticks.len());
@@ -501,7 +504,6 @@ impl OsuBeatmap {
             }
         }
 
-
         // let mut ticks = 0;
         // for osuhitobj in &self.hit_objects {
         //     if let OsuHitObjectType::Slider(_) = osuhitobj.hitobjecttype {
@@ -509,11 +511,9 @@ impl OsuBeatmap {
         //     }
         // }
         // println!("Ticks: {}", ticks);
-        
+
         // println!("Max Combo: {}", self.calc_max_combo());
         self.max_combo = self.calc_max_combo();
-
-
     }
 
     pub fn get_current_timing_points(
@@ -582,26 +582,65 @@ fn str_to_line_vec(s: &str) -> Vec<String> {
         .collect::<Vec<String>>()
 }
 
+use std::collections::HashMap;
+
 //std::io::Result<OsuBeatmap>
 pub fn parse_osu_file(p: &Path) -> std::io::Result<OsuBeatmap> {
     let mut f = fs::File::open(p)?;
     let mut s = String::new();
+
     f.read_to_string(&mut s).unwrap();
+
+    let s_lines: Vec<&str> = s.split("\n").map(|line| line.trim()).collect();
+
+    let mut file_parts: HashMap<&str, Vec<String>> = HashMap::new();
+
+    let mut current: Vec<String> = Vec::new();
+    let mut name = None;
+    for line in s_lines {
+        if !(line.starts_with("[") && line.ends_with("]")) {
+            current.push(line.to_string());
+            continue;
+        }
+        // println!("Line: {}",line);
+
+        if name.is_none() {
+            name = Some(&line[1..line.len() - 1]);
+            continue;
+        }
+
+        file_parts.insert(name.unwrap(), current);
+        current = Vec::new();
+        name = Some(&line[1..line.len() - 1]);
+
+        // println!("{name:?}");
+    }
+    file_parts.insert(name.unwrap(), current);
+    // println!("File Parts: {:#?}", file_parts);
+
+    // for line in s.split("")
 
     let mut split_s = s
         .split("]\r")
         .map(|x| return x.to_string())
         .collect::<Vec<String>>();
 
-    let mut general = str_to_line_vec(split_s[1].as_str());
-    let mut editor = str_to_line_vec(split_s[2].as_str());
-    let mut metadata = str_to_line_vec(split_s[3].as_str());
-    let mut difficulty = str_to_line_vec(split_s[4].as_str());
-    let mut events = str_to_line_vec(split_s[5].as_str());
-    let mut timing_points = str_to_line_vec(split_s[6].as_str());
-    let mut colors = str_to_line_vec(split_s[7].as_str());
-    difficulty.pop();
-    timing_points.pop();
+    // println!("{:#?}", s_lines);
+
+    // let mut general = str_to_line_vec(split_s[1].as_str());
+    // let mut editor = str_to_line_vec(split_s[2].as_str());
+    // let mut metadata = str_to_line_vec(split_s[3].as_str());
+    // let mut difficulty = str_to_line_vec(split_s[4].as_str());
+    // let mut events = str_to_line_vec(split_s[5].as_str());
+    // let mut timing_points = str_to_line_vec(split_s[6].as_str());
+    // let mut colors = str_to_line_vec(split_s[7].as_str());
+
+    let mut editor = file_parts.get("Editor").unwrap().clone();
+    let mut metadata = file_parts.get("Metadata").unwrap().clone();
+    let mut difficulty = file_parts.get("Difficulty").unwrap().clone();
+    let mut events = file_parts.get("Events").unwrap().clone();
+    let mut timing_points = file_parts.get("TimingPoints").unwrap().clone();
+    // let mut colors = file_parts.get("Colours").unwrap().clone();
 
     difficulty = difficulty
         .into_iter()
@@ -612,8 +651,20 @@ pub fn parse_osu_file(p: &Path) -> std::io::Result<OsuBeatmap> {
         .filter(|item| !item.is_empty())
         .collect();
 
-    let beatmap_str = split_s[8].trim();
-    let beatmap_vec = str_to_line_vec(split_s[8].as_str());
+    // let beatmap_str = split_s[8].trim();
+    // let beatmap_vec = str_to_line_vec(split_s[8].as_str());
+    let beatmap_vec: Vec<String> = file_parts
+        .get("HitObjects")
+        .unwrap()
+        .clone()
+        .into_iter()
+        .filter(|item| !item.is_empty())
+        .collect();
+
+    // beatmap_vec = beatmap_vec
+    //     .into_iter()
+    //     .filter(|item| !item.is_empty())
+    //     .collect();
 
     let mut osu_beatmap = OsuBeatmap::default();
 
