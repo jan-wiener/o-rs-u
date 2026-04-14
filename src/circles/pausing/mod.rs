@@ -1,11 +1,11 @@
-use bevy::{input::keyboard, prelude::*};
+use bevy::{prelude::*};
 
 use crate::public_resources::GameAudio;
 
 pub fn pausing_system(
     mut time: ResMut<Time<Virtual>>,
     kb: Res<ButtonInput<KeyCode>>,
-    mut beatmap_music: Option<Single<&mut AudioSink, With<GameAudio>>>,
+    beatmap_music: Option<Single<&mut AudioSink, With<GameAudio>>>,
 ) {
     if !kb.just_pressed(KeyCode::Escape) {
         return;
@@ -18,8 +18,7 @@ pub fn pausing_system(
             time.pause();
         }
     }
-    if let Some(mut beatmap_music) = beatmap_music {
-        println!("_---------");
+    if let Some(beatmap_music) = beatmap_music {
         beatmap_music.pause();
     }
 }
