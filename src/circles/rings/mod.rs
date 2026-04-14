@@ -14,9 +14,9 @@ pub fn shrink_ring(
     bmw: Res<BeatmapWorkerInfo>,
     mut add_score_msg: MessageWriter<AddScore>,
 ) {
-    if time.elapsed_secs() < 1.5 {
-        return;
-    }
+    // if time.elapsed_secs() < 1.5 {
+    //     return;
+    // }
 
     for (mut tr, mut ring, ch) in ring_q {
         // println!("bmw time: {} | ring t: {} | realhitwindows s: {}", bmw.get_time_since_start(time.elapsed_secs()),ring.moment_t,osu.real_hit_window.score50);

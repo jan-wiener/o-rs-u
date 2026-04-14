@@ -5,6 +5,7 @@ pub mod etc;
 pub mod rings;
 pub mod scoring;
 pub mod sliders;
+pub mod pausing;
 
 use crate::SVG_MODE;
 use crate::WORLD_BG;

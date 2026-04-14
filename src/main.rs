@@ -268,6 +268,7 @@ fn main() {
 
 
     app.insert_resource(Time::<Fixed>::from_hz(240.0));
+    // app.insert_resource(Time::<Virtual>::);
 
     app.add_message::<OsuHitObject>();
     app.add_message::<RemoveCircle>();
@@ -291,6 +292,7 @@ fn main() {
     app.add_systems(
         Update,
         (
+            circles::pausing::pausing_system.before(beatmaps::play_audio),
             circles::rings::shrink_ring,
             circles::summon_circle,
             circles::clicking::circle_click.before(circles::sliders::move_slider),

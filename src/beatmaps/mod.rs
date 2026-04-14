@@ -77,11 +77,11 @@ pub fn load_osu_beatmap(
 
 pub fn play_audio(
     mut audio: Single<&mut AudioSink, With<GameAudio>>,
-    time: Res<Time>,
+    time: Res<Time<Virtual>>,
     mut bmw: ResMut<BeatmapWorkerInfo>,
 ) {
     let time_since_start = time.elapsed_secs() - bmw.started_at;
-    if time_since_start > 0.0 && audio.is_paused() {
+    if time_since_start > 0.0 && audio.is_paused() && !time.is_paused() {
         audio.play();
     }
 }
