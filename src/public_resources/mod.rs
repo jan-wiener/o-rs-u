@@ -1,10 +1,5 @@
-
-
-
-use bevy::prelude::*;
 use crate::osuparser::*;
-
-
+use bevy::prelude::*;
 
 #[derive(Component)]
 pub struct OsuRing {
@@ -70,8 +65,6 @@ impl Default for CircleInfo {
     }
 }
 
-
-
 #[derive(Message)]
 pub struct RemoveCircle {
     pub entity: Entity,
@@ -99,7 +92,33 @@ pub struct CircleMaterials {
     pub main_svg: Handle<VelloSvg>,
 }
 
+#[derive(Resource)]
+pub struct GlobalParticleEffects {
+    pub great_hit: Handle<bevy_enoki::Particle2dEffect>,
+    pub ok_hit: Handle<bevy_enoki::Particle2dEffect>,
+    pub meh_hit: Handle<bevy_enoki::Particle2dEffect>,
+    pub miss: Handle<bevy_enoki::Particle2dEffect>,
 
+    pub tick_hit: Handle<bevy_enoki::Particle2dEffect>,
+    pub tick_miss: Handle<bevy_enoki::Particle2dEffect>,
+    pub tick_ok: Handle<bevy_enoki::Particle2dEffect>,
+}
+
+impl GlobalParticleEffects {
+    pub fn from_score(&self, score: &HitScore) -> Handle<bevy_enoki::Particle2dEffect> {
+        match score {
+            HitScore::Great => self.great_hit.clone(),
+            HitScore::Ok => self.ok_hit.clone(),
+            HitScore::Meh => self.meh_hit.clone(),
+            HitScore::SliderTickHit | HitScore::SliderRepeatHit | HitScore::SliderEndHit => {
+                self.tick_hit.clone()
+            }
+            HitScore::ComboMiss => self.tick_miss.clone(),
+            HitScore::Miss => self.miss.clone(),
+            HitScore::SliderEndMiss => self.tick_ok.clone()
+        }
+    }
+}
 
 #[derive(Message)]
 pub struct StartMovingSlider {
@@ -116,7 +135,6 @@ pub struct MovingSlider {
 pub struct MovingSlidersRes {
     pub sliders: Vec<MovingSlider>,
 }
-
 
 #[derive(Resource, Default)]
 pub struct MouseInfo {
@@ -141,7 +159,6 @@ pub struct DrawTick {
     pub lifetime: f32,
 }
 
-
 #[derive(Component)]
 pub struct SliderLine {
     pub timer: Timer,
@@ -151,7 +168,6 @@ pub struct SliderLine {
 pub struct SliderTick {
     pub timer: Timer,
 }
-
 
 #[derive(Message)]
 pub struct LoadBeatmap {
@@ -168,18 +184,15 @@ pub struct BeatmapWorkerInfo {
 
 impl BeatmapWorkerInfo {
     pub fn get_time_since_start(&self, time: f32) -> f32 {
-        return time - self.started_at
+        return time - self.started_at;
     }
 }
-
-
 
 #[derive(Resource, Default)]
 pub struct GeneralInfo {
     pub real_circle_radius: f32,
     pub real_hit_window: f32,
 }
-
 
 #[derive(Clone)]
 pub enum HitScore {
@@ -190,10 +203,10 @@ pub enum HitScore {
     SliderTickHit,
     SliderRepeatHit,
     SliderEndHit,
+    SliderEndMiss,
     ComboMiss,
-
+    
 }
-
 
 impl HitScore {
     pub fn from_delta(delta: f32, osu_real_hit_window: &RealHitWindow) -> Self {
@@ -206,27 +219,18 @@ impl HitScore {
         } else {
             Self::Miss
         }
-
     }
 
     pub fn affects_accuracy(&self) -> bool {
         match self {
-            Self::Great | Self::Ok | Self::Meh | Self::Miss => {
-                true
-            },
-            _ => {
-                false
-            }
+            Self::Great | Self::Ok | Self::Meh | Self::Miss => true,
+            _ => false,
         }
     }
     pub fn is_miss(&self) -> bool {
         match self {
-            Self::Miss | Self::ComboMiss => {
-                true
-            },
-            _ => {
-                false
-            }
+            Self::Miss | Self::ComboMiss => true,
+            _ => false,
         }
     }
 
@@ -235,19 +239,19 @@ impl HitScore {
         match self {
             HitScore::Great => {
                 score = 300;
-            },
+            }
             HitScore::Ok => {
                 score = 100;
-            },
+            }
             HitScore::Meh => {
                 score = 50;
-            },
-            HitScore::Miss | HitScore::ComboMiss => {
+            }
+            HitScore::Miss | HitScore::ComboMiss | HitScore::SliderEndMiss => {
                 score = 0;
-            },
+            }
             HitScore::SliderTickHit => {
                 score = 10;
-            },
+            }
             HitScore::SliderRepeatHit | HitScore::SliderEndHit => {
                 score = 30;
             }
@@ -255,7 +259,6 @@ impl HitScore {
         score
     }
 }
-
 
 #[derive(Resource, Default)]
 pub struct ScoreInfo {
@@ -273,16 +276,16 @@ impl ScoreInfo {
             match hit {
                 HitScore::Great => {
                     accuracy_sum += 1.0;
-                },
+                }
                 HitScore::Ok => {
                     accuracy_sum += 0.66;
-                },
+                }
                 HitScore::Meh => {
                     accuracy_sum += 0.33;
-                },
+                }
                 HitScore::Miss => {
                     // no add
-                },
+                }
                 _ => {}
             }
         }
@@ -290,26 +293,25 @@ impl ScoreInfo {
     }
 }
 
-
-
-
-
-
 #[derive(Message)]
 pub struct AddScore {
     pub score: HitScore,
+    pub pos: Option<Vec3>,
 }
-
 
 //Score = ((700000 * combo_bonus / max_combo_bonus) + (300000 * ((accuracy_percentage / 100) ^ 10) * elapsed_objects / total_objects) + spinner_bonus) * mod_multiplier
 impl AddScore {
-    
     pub fn new(score: HitScore) -> Self {
-        Self {score}
+        Self { score, pos: None }
+    }
+
+    pub fn new_with_pos(score: HitScore, pos: Vec3) -> Self {
+        Self {
+            score,
+            pos: Some(pos),
+        }
     }
 }
-
-
 
 #[derive(Component)]
 pub struct ScoreGui;
@@ -320,29 +322,20 @@ pub struct AccuracyGui;
 #[derive(Component)]
 pub struct ComboGui;
 
-
 pub enum TickType {
     SliderTick,
     SliderEnd,
-    SliderRepeat
+    SliderRepeat,
 }
 impl TickType {
     pub fn to_hit_score(&self) -> HitScore {
         match self {
-            Self::SliderTick => {
-                HitScore::SliderTickHit
-            },
-            Self::SliderRepeat => {
-                HitScore::SliderRepeatHit
-            },
-            Self::SliderEnd => {
-                HitScore::SliderEndHit
-            }
+            Self::SliderTick => HitScore::SliderTickHit,
+            Self::SliderRepeat => HitScore::SliderRepeatHit,
+            Self::SliderEnd => HitScore::SliderEndHit,
         }
     }
 }
-
-
 
 #[derive(Message)]
 pub struct TickCheck {
@@ -350,18 +343,11 @@ pub struct TickCheck {
     pub tick_type: TickType,
 }
 
-
-
 #[derive(Component)]
 pub struct GameAudio;
-
-
 
 #[derive(Component)]
 pub struct Cameraz0;
 
 #[derive(Component)]
 pub struct Cameraz2;
-
-
-

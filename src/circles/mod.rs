@@ -106,7 +106,7 @@ pub fn summon_circle(
             centcmds.with_child((
             VelloSvg2d(circlemats.main_svg.clone()),
             VelloSvgAnchor::Center,
-            Transform::from_scale(Vec3::splat(1.1)),
+            Transform::from_scale(Vec3::splat(1.03)),
             WORLD_FG
         ));
         }

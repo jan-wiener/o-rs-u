@@ -19,7 +19,7 @@ pub fn tick_check(
         let mut missed = false;
         if kb.pressed(KeyCode::KeyZ) || kb.pressed(KeyCode::KeyX) || mouse_button.pressed(MouseButton::Left) || mouse_button.pressed(MouseButton::Right) {
             if tick.trpos.distance(mouse_info.pos) <= osu.real_circle_size * 2.4 {
-                add_score_msg.write(AddScore::new(tick.tick_type.to_hit_score()));
+                add_score_msg.write(AddScore::new_with_pos(tick.tick_type.to_hit_score(), tick.trpos.extend(950.0)));
             } else {
                 missed = true;
             }
@@ -29,9 +29,10 @@ pub fn tick_check(
         if missed {
             // println!("MISSED A TICK");
             if let TickType::SliderEnd = tick.tick_type {
+                add_score_msg.write(AddScore::new_with_pos(HitScore::SliderEndMiss, tick.trpos.extend(950.0)));
                 continue;
             }
-            add_score_msg.write(AddScore::new(HitScore::ComboMiss));
+            add_score_msg.write(AddScore::new_with_pos(HitScore::ComboMiss, tick.trpos.extend(950.0)));
         }
 
     }

@@ -1,5 +1,7 @@
 
 use bevy::prelude::*;
+use bevy_enoki::{EnokiPlugin, Particle2dEffect};
+
 
 mod beatmaps;
 mod circles;
@@ -16,7 +18,7 @@ pub const WORLD_BG: RenderLayers = RenderLayers::layer(0);
 pub const WORLD_FG: RenderLayers = RenderLayers::layer(1);
 // pub const WORLD_FG_EXTRA: RenderLayers = RenderLayers::layer(2);
 
-pub const SVG_MODE: bool = false;
+pub const SVG_MODE: bool = true;
 
 fn setup_world(
     assets: Res<AssetServer>,
@@ -97,6 +99,23 @@ fn setup_world(
     let main_svg = assets.load("skins/circle.svg");
 
 
+
+
+
+
+    commands.insert_resource(GlobalParticleEffects{
+        great_hit: assets.load("skins/particles/great.ron"),
+        ok_hit: assets.load("skins/particles/ok.ron"),
+        meh_hit: assets.load("skins/particles/meh.ron"),
+        miss: assets.load("skins/particles/miss.ron"),
+
+        tick_hit: assets.load("skins/particles/tick_hit.ron"),
+        tick_miss: assets.load("skins/particles/tick_miss.ron"),
+        tick_ok: assets.load("skins/particles/tick_ok.ron"),
+
+    });
+
+
     commands.insert_resource(CircleMaterials {
         meh_mat,
         ok_mat,
@@ -135,8 +154,8 @@ fn setup_world(
     ));
 
     load_bmap_msg.write(LoadBeatmap {
-        path: "./assets/beatmaps/mirage_hard.osu".into(),
-        audio: "beatmaps/audio.ogg".into(),
+        path: "./assets/beatmaps/mirage_easy.osu".into(),
+        audio: "beatmaps/mirage.ogg".into(),
     });
 
 
@@ -261,6 +280,7 @@ fn main() {
     }));
 
     app.add_plugins(mouse_pos_system::MousePosPlugin);
+    app.add_plugins(EnokiPlugin);
 
     let mut vello = VelloPlugin::default();
     vello.canvas_render_layers = WORLD_FG;

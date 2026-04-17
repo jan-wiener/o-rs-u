@@ -1,6 +1,10 @@
 use bevy::ecs::system::entity_command::despawn;
 use bevy::prelude::*;
+use bevy_enoki::ParticleEffectHandle;
+use bevy_enoki::ParticleSpawner;
+use bevy_enoki::prelude::OneShot;
 
+use crate::WORLD_FG;
 use crate::osuparser::*;
 use crate::public_resources::*;
 
@@ -31,6 +35,7 @@ pub fn circle_click(
     osu: Res<OsuBeatmap>,
     mut score: ResMut<ScoreInfo>,
     mut add_score_msg: MessageWriter<AddScore>,
+    mut particles: Res<GlobalParticleEffects>,
 ) {
     let mut click_count = 0;
     if kb.just_pressed(KeyCode::KeyZ) || mouse_button.just_pressed(MouseButton::Left) {
@@ -42,6 +47,15 @@ pub fn circle_click(
     if click_count == 0 {
         return;
     }
+
+    // commands.spawn((
+    //         // tr.clone(),
+    //         Transform::from_translation(mouse_info.pos.extend(950.0)),
+    //         ParticleSpawner::default(),
+    //         ParticleEffectHandle(particles.default_hit.clone()),
+    //         OneShot::Despawn,
+    //         WORLD_FG,
+    //     ));
 
     // println!("Clicked");
 
@@ -59,14 +73,18 @@ pub fn circle_click(
     // let selected_entities = potential_entities.split_at;
 
     for (ent, _) in potential_entities.iter().take(click_count) {
-        let (_tr, mut circleinfo, entity, children) = circles_q.get_mut(ent.to_owned()).unwrap();
+        let (tr, mut circleinfo, entity, children) = circles_q.get_mut(ent.to_owned()).unwrap();
         circleinfo.clicked = true;
 
         let delta = (bmw.get_time_since_start(time.elapsed_secs()) - circleinfo.moment_t).abs();
 
         let result = HitScore::from_delta(delta, &osu.real_hit_window);
 
-        add_score_msg.write(AddScore::new(result));
+
+
+        add_score_msg.write(AddScore::new_with_pos(result, tr.translation.clone()));
+
+        
 
         match circleinfo.circle_type {
             // println!("___");
