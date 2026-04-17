@@ -3614,7 +3614,7 @@ dependencies = [
 
 [[package]]
 name = "o-rs-u"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "bevy",
  "bevy_enoki",
