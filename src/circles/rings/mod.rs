@@ -6,7 +6,7 @@ use crate::osuparser::*;
 
 pub fn shrink_ring(
     time: Res<Time>,
-    ring_q: Query<(&mut Transform, &mut OsuRing, &ChildOf)>,
+    ring_q: Query<(&mut Transform, &mut OsuRing, &ChildOf, &mut Visibility)>,
     mut circle_q: Query<&mut CircleInfo>,
     mut rmcrc: MessageWriter<RemoveCircle>,
     osu: Res<OsuBeatmap>,
@@ -18,7 +18,7 @@ pub fn shrink_ring(
     //     return;
     // }
 
-    for (mut tr, mut ring, ch) in ring_q {
+    for (mut tr, mut ring, ch, mut ring_vis) in ring_q {
         // println!("bmw time: {} | ring t: {} | realhitwindows s: {}", bmw.get_time_since_start(time.elapsed_secs()),ring.moment_t,osu.real_hit_window.score50);
         if tr.scale.x > 1.0 {
             // println!("Shrunk @ {}", time.elapsed_secs());
@@ -26,6 +26,8 @@ pub fn shrink_ring(
         } else if !ring.slider_mode && (bmw.get_time_since_start(time.elapsed_secs()) - ring.moment_t) > osu.real_hit_window.score50 {
             let mut circle = circle_q.get_mut(ch.parent()).unwrap();
             circle.clicked = true;
+
+            
 
             add_score_msg.write(AddScore::new_with_pos(HitScore::Miss, circle.original_pos.extend(950.0)));
             
@@ -47,6 +49,8 @@ pub fn shrink_ring(
                 }
                 _ => {}
             }
+        } else {
+            *ring_vis = Visibility::Hidden;
         }
     }
 }

@@ -8,7 +8,7 @@
    version="1.1"
    id="svg1"
    inkscape:version="1.4.3 (0d15f75042, 2025-12-25)"
-   sodipodi:docname="circle2.svg"
+   sodipodi:docname="circle_slider.svg"
    inkscape:export-filename="circle.png"
    inkscape:export-xdpi="384"
    inkscape:export-ydpi="384"
@@ -27,8 +27,8 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      inkscape:zoom="2.0000001"
-     inkscape:cx="115"
-     inkscape:cy="128"
+     inkscape:cx="125.99999"
+     inkscape:cy="123.49999"
      inkscape:window-width="1371"
      inkscape:window-height="829"
      inkscape:window-x="0"
@@ -43,16 +43,23 @@
      id="layer1"
      transform="translate(-38.538063,-54.467133)">
     <circle
-       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:4.233;stroke-dasharray:4.233, 4.233;stroke-opacity:0.962294"
+       style="fill:#161616;fill-opacity:1;stroke:none;stroke-width:4.233;stroke-dasharray:4.233, 4.233;stroke-opacity:0.962294"
        id="circle1"
        cx="70.396065"
        cy="86.325264"
        r="31.858" />
     <circle
-       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:3.68989;stroke-dasharray:3.68989, 3.68989;stroke-opacity:0.962294"
+       style="fill:#e3e3e3;fill-opacity:1;stroke:none;stroke-width:3.68989;stroke-dasharray:3.68989, 3.68989;stroke-opacity:0.962294"
        id="path1"
        cx="70.396194"
        cy="86.325264"
        r="27.7705" />
+    <ellipse
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:3.5;stroke-dasharray:none;stroke-opacity:1"
+       id="circle1-3"
+       cx="70.396065"
+       cy="86.325264"
+       rx="20.349001"
+       ry="20.348625" />
   </g>
 </svg>

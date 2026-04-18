@@ -2,13 +2,13 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="63.716mm"
+   width="63.716263mm"
    height="63.716263mm"
-   viewBox="0 0 63.716 63.716263"
+   viewBox="0 0 63.716263 63.716263"
    version="1.1"
    id="svg1"
    inkscape:version="1.4.3 (0d15f75042, 2025-12-25)"
-   sodipodi:docname="circle2.svg"
+   sodipodi:docname="circle.svg"
    inkscape:export-filename="circle.png"
    inkscape:export-xdpi="384"
    inkscape:export-ydpi="384"
@@ -26,9 +26,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="2.0000001"
-     inkscape:cx="115"
-     inkscape:cy="128"
+     inkscape:zoom="1.4142136"
+     inkscape:cx="99.702056"
+     inkscape:cy="50.911688"
      inkscape:window-width="1371"
      inkscape:window-height="829"
      inkscape:window-x="0"
@@ -43,16 +43,16 @@
      id="layer1"
      transform="translate(-38.538063,-54.467133)">
     <circle
-       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:4.233;stroke-dasharray:4.233, 4.233;stroke-opacity:0.962294"
-       id="circle1"
-       cx="70.396065"
-       cy="86.325264"
-       r="31.858" />
-    <circle
-       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:3.68989;stroke-dasharray:3.68989, 3.68989;stroke-opacity:0.962294"
+       style="fill:#ffffff;stroke-width:1;fill-opacity:1"
        id="path1"
        cx="70.396194"
        cy="86.325264"
-       r="27.7705" />
+       r="31.858131" />
+    <circle
+       style="fill:#0c0c0c;fill-opacity:0;stroke:#000000;stroke-width:3.16421;stroke-dasharray:none;stroke-opacity:1"
+       id="circle1"
+       cx="70.396194"
+       cy="86.325264"
+       r="30.293621" />
   </g>
 </svg>

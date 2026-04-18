@@ -27,7 +27,7 @@ pub fn circle_click(
 
     mouse_info: Res<MouseInfo>,
     mut circles_q: Query<(&Transform, &mut CircleInfo, Entity, &Children)>,
-    mut ring_q: Query<(&mut Transform, &mut OsuRing, &ChildOf), Without<CircleInfo>>,
+    mut ring_q: Query<(&mut Transform, &mut OsuRing, &ChildOf, &mut Visibility), Without<CircleInfo>>,
     mut commands: Commands,
     mut removewriter: MessageWriter<RemoveCircle>,
     mut slider_res: ResMut<MovingSlidersRes>,
@@ -79,7 +79,7 @@ pub fn circle_click(
         let delta = (bmw.get_time_since_start(time.elapsed_secs()) - circleinfo.moment_t).abs();
 
         let result = HitScore::from_delta(delta, &osu.real_hit_window);
-
+        
 
 
         add_score_msg.write(AddScore::new_with_pos(result, tr.translation.clone()));
@@ -97,6 +97,7 @@ pub fn circle_click(
                 for child in children {
                     if let Ok(mut entity) = ring_q.get_mut(child.to_owned()) {
                         entity.1.slider_mode = true;
+                        *entity.3 = Visibility::Hidden;
                     }
                 }
 

@@ -90,6 +90,7 @@ pub struct CircleMaterials {
     pub ring_mat: MeshMaterial2d<ColorMaterial>,
 
     pub main_svg: Handle<VelloSvg>,
+    pub slider_svg: Handle<VelloSvg>,
 }
 
 #[derive(Resource)]
@@ -351,3 +352,8 @@ pub struct Cameraz0;
 
 #[derive(Component)]
 pub struct Cameraz2;
+
+
+
+#[derive(Component)]
+pub struct WhatShouldIClick;
