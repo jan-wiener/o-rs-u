@@ -111,7 +111,7 @@ pub fn summon_circle(
             centcmds.with_child((
                 VelloSvg2d(vello_svg_handle),
                 VelloSvgAnchor::Center,
-                Transform::from_scale(Vec3::splat(1.03)),
+                Transform::from_scale(Vec3::splat(1.03) * osu.screen_size.y / 1080.0),
                 WORLD_FG,
             ));
         } else {

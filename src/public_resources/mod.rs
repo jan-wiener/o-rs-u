@@ -1,5 +1,7 @@
+use std::time::Duration;
+
 use crate::osuparser::*;
-use bevy::prelude::*;
+use bevy::{asset, platform::thread, prelude::*};
 
 #[derive(Component)]
 pub struct OsuRing {
@@ -70,6 +72,7 @@ pub struct RemoveCircle {
     pub entity: Entity,
 }
 
+use bevy_enoki::Particle2dEffect;
 use bevy_vello::prelude::VelloSvg;
 
 #[derive(Resource)]
@@ -93,7 +96,7 @@ pub struct CircleMaterials {
     pub slider_svg: Handle<VelloSvg>,
 }
 
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct GlobalParticleEffects {
     pub great_hit: Handle<bevy_enoki::Particle2dEffect>,
     pub ok_hit: Handle<bevy_enoki::Particle2dEffect>,
@@ -103,9 +106,38 @@ pub struct GlobalParticleEffects {
     pub tick_hit: Handle<bevy_enoki::Particle2dEffect>,
     pub tick_miss: Handle<bevy_enoki::Particle2dEffect>,
     pub tick_ok: Handle<bevy_enoki::Particle2dEffect>,
+
+
+    pub done_scaling: bool,
 }
 
+
+
 impl GlobalParticleEffects {
+    // i could use serde deserialize but i dont wanna add more deps
+    pub fn as_arr_slice_mut(&mut self) -> Vec<&mut Handle<bevy_enoki::Particle2dEffect>> {
+        vec![&mut self.great_hit, &mut self.ok_hit, &mut self.meh_hit, &mut self.miss, &mut self.tick_hit, &mut self.tick_miss, &mut self.tick_ok]
+    }
+    pub fn scale_with_screen(&mut self, particle_assets: &mut ResMut<Assets<Particle2dEffect>>, osu: &Res<OsuBeatmap>) {
+        info!("------SCALED");
+        self.done_scaling = true;
+        for particle_handle in self.as_arr_slice_mut() {
+            let particle_inner = particle_assets.get_mut(particle_handle.id()).unwrap();
+
+
+            particle_inner.linear_speed.as_mut().unwrap().0 *= 1.0 * osu.screen_size.y / 1080.0;
+
+            particle_inner.linear_damp.as_mut().unwrap().0 *= 1080.0 / osu.screen_size.y;
+
+
+            for point in &mut particle_inner.scale_curve.as_mut().unwrap().points {
+                point.0 *= 1.0 * osu.screen_size.y / 1080.0;
+            }
+
+        } 
+
+    }
+
     pub fn from_score(&self, score: &HitScore) -> Handle<bevy_enoki::Particle2dEffect> {
         match score {
             HitScore::Great => self.great_hit.clone(),

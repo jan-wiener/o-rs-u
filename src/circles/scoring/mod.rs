@@ -1,6 +1,7 @@
 use crate::osuparser::OsuBeatmap;
 use crate::public_resources::{AccuracyGui, AddScore, ComboGui, HitScore, ScoreGui, ScoreInfo};
 use bevy::prelude::*;
+use bevy_enoki::Particle2dEffect;
 
 //Score = ((700000 * combo_bonus / max_combo_bonus) + (300000 * ((accuracy_percentage / 100) ^ 10) * elapsed_objects / total_objects) + spinner_bonus) * mod_multiplier
 
@@ -49,8 +50,8 @@ pub fn score_system(
     }
 }
 
-use crate::WORLD_FG;
 use crate::GlobalParticleEffects;
+use crate::WORLD_FG;
 use bevy_enoki::{ParticleEffectHandle, ParticleSpawner, prelude::OneShot};
 
 pub fn summon_particles(
@@ -69,4 +70,15 @@ pub fn summon_particles(
         OneShot::Despawn,
         WORLD_FG,
     ));
+}
+
+pub fn scale_particles_once(
+    time: Res<Time>,
+    osu: Res<OsuBeatmap>,
+    mut particles_assets_collection: ResMut<Assets<Particle2dEffect>>,
+    mut particles: ResMut<GlobalParticleEffects>,
+) {
+    if time.elapsed_secs() > 1.0 && !particles.done_scaling {
+        particles.scale_with_screen(&mut particles_assets_collection, &osu);
+    }
 }

@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_enoki::prelude::Rval;
 use bevy_enoki::{EnokiPlugin, Particle2dEffect};
 use bevy_vello::vello::peniko::color::Srgb;
 
@@ -19,8 +20,13 @@ pub const WORLD_FG: RenderLayers = RenderLayers::layer(1);
 
 pub const SVG_MODE: bool = true;
 
+
+
+
+
 fn setup_world(
     assets: Res<AssetServer>,
+    mut particles: ResMut<Assets<Particle2dEffect>>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -71,7 +77,7 @@ fn setup_world(
     let circle_handle = meshes.add(circle);
     let circle_mesh = Mesh2d(circle_handle);
 
-    let circle_ring = circle.to_ring(6.0);
+    let circle_ring = circle.to_ring(6.0 * window.0.size().y / 1080.0);
     let circle_ring_handle = meshes.add(circle_ring);
     let circle_ring_mesh = Mesh2d(circle_ring_handle);
 
@@ -99,16 +105,27 @@ fn setup_world(
     let main_svg = assets.load("skins/circle.svg");
     let slider_svg = assets.load("skins/circle_slider.svg");
 
+
+
+
+    // let mut great_hit = assets.load("skins/particles/great.ron");
+
+    // let great_hit_inner = particles.get_mut(great_hit.id()).unwrap();
+    // great_hit_inner.linear_speed.as_mut().unwrap().0 = 10.0;
+
+
     commands.insert_resource(GlobalParticleEffects {
         great_hit: assets.load("skins/particles/great.ron"),
         ok_hit: assets.load("skins/particles/ok.ron"),
         meh_hit: assets.load("skins/particles/meh.ron"),
         miss: assets.load("skins/particles/miss.ron"),
-
         tick_hit: assets.load("skins/particles/tick_hit.ron"),
         tick_miss: assets.load("skins/particles/tick_miss.ron"),
         tick_ok: assets.load("skins/particles/tick_ok.ron"),
+        done_scaling: false
     });
+
+   
 
     commands.insert_resource(CircleMaterials {
         meh_mat,
@@ -136,7 +153,7 @@ fn setup_world(
         Vec2::new(512.0, 384.0) * (window.0.height() / 480.0),
     );
 
-    // commands.spawn((s, Transform::from_xyz(0.0, 0.0, 0.0)));
+    commands.spawn((s, Transform::from_xyz(0.0, 0.0, 0.0)));
 
     let default_audio_source = assets.add(AudioSource {
         bytes: std::sync::Arc::new([]),
@@ -244,6 +261,8 @@ fn setup_world(
 
 
 
+
+
 }
 
 // fn mouseclick_to_circle_summon(
@@ -282,9 +301,10 @@ fn main() {
                 primary_window: Some(Window {
                     // resolution:
                     //     bevy_window::WindowResolution::new(1920, 1080).with_scale_factor_override(1.0),
-                    resolution: bevy_window::WindowResolution::new(500, 500)
+                    resolution: bevy_window::WindowResolution::new(1400, 720)
                         .with_scale_factor_override(1.0),
-                    mode: bevy_window::WindowMode::BorderlessFullscreen(MonitorSelection::Current),
+                    // mode: bevy_window::WindowMode::BorderlessFullscreen(MonitorSelection::Current),
+                    mode: bevy_window::WindowMode::Windowed,
                     present_mode: bevy_window::PresentMode::AutoNoVsync,
                     ..Default::default()
                 }),
@@ -331,6 +351,7 @@ fn main() {
     app.add_systems(
         Update,
         (
+            circles::scoring::scale_particles_once,
             circles::what_should_i_click,
             circles::pausing::pausing_system.before(beatmaps::play_audio),
             circles::rings::shrink_ring,
