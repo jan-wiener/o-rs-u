@@ -7,6 +7,7 @@ mod beatmaps;
 mod circles;
 mod osuparser;
 mod public_resources;
+mod game_debug;
 
 use crate::circles::etc::*;
 use crate::osuparser::OsuHitObject;
@@ -303,8 +304,8 @@ fn main() {
                     //     bevy_window::WindowResolution::new(1920, 1080).with_scale_factor_override(1.0),
                     resolution: bevy_window::WindowResolution::new(1400, 720)
                         .with_scale_factor_override(1.0),
-                    // mode: bevy_window::WindowMode::BorderlessFullscreen(MonitorSelection::Current),
-                    mode: bevy_window::WindowMode::Windowed,
+                    mode: bevy_window::WindowMode::BorderlessFullscreen(MonitorSelection::Current),
+                    // mode: bevy_window::WindowMode::Windowed,
                     present_mode: bevy_window::PresentMode::AutoNoVsync,
                     ..Default::default()
                 }),
@@ -321,6 +322,9 @@ fn main() {
 
     app.add_plugins(mouse_pos_system::MousePosPlugin);
     app.add_plugins(EnokiPlugin);
+
+    
+    app.add_plugins(game_debug::GameDebugPlugin);
 
     let mut vello = VelloPlugin::default();
     vello.canvas_render_layers = WORLD_FG;
@@ -376,3 +380,12 @@ fn main() {
 
     app.run();
 }
+
+
+
+
+
+
+
+
+

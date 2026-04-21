@@ -389,3 +389,7 @@ pub struct Cameraz2;
 
 #[derive(Component)]
 pub struct WhatShouldIClick;
+
+
+#[derive(Component)]
+pub struct FpsGUI;
