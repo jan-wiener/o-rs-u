@@ -374,7 +374,7 @@ impl OsuTimingPoint {
     }
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource, Default, Asset, TypePath)]
 pub struct OsuBeatmap {
     pub hit_objects: Vec<OsuHitObject>,
     pub difficulty: OsuDifficulty,
@@ -572,6 +572,254 @@ impl OsuBeatmap {
         let x = 54.4 - 4.48 * (self.difficulty.circle_size as f32);
         (self.screen_size.y / 480.0) * x
     }
+
+    pub fn from_string(s: String) -> Result<Self, OsuBeatmapError> {
+        let s_lines: Vec<&str> = s.split("\n").map(|line| line.trim()).collect();
+
+        let mut file_parts: HashMap<&str, Vec<String>> = HashMap::new();
+
+        let mut current: Vec<String> = Vec::new();
+        let mut name = None;
+        for line in s_lines {
+            if !(line.starts_with("[") && line.ends_with("]")) {
+                current.push(line.to_string());
+                continue;
+            }
+            // println!("Line: {}",line);
+
+            if name.is_none() {
+                name = Some(&line[1..line.len() - 1]);
+                continue;
+            }
+
+            file_parts.insert(name.unwrap(), current);
+            current = Vec::new();
+            name = Some(&line[1..line.len() - 1]);
+
+            // println!("{name:?}");
+        }
+        file_parts.insert(name.unwrap(), current);
+        // println!("File Parts: {:#?}", file_parts);
+
+        // for line in s.split("")
+
+        let mut split_s = s
+            .split("]\r")
+            .map(|x| return x.to_string())
+            .collect::<Vec<String>>();
+
+        // println!("{:#?}", s_lines);
+
+        // let mut general = str_to_line_vec(split_s[1].as_str());
+        // let mut editor = str_to_line_vec(split_s[2].as_str());
+        // let mut metadata = str_to_line_vec(split_s[3].as_str());
+        // let mut difficulty = str_to_line_vec(split_s[4].as_str());
+        // let mut events = str_to_line_vec(split_s[5].as_str());
+        // let mut timing_points = str_to_line_vec(split_s[6].as_str());
+        // let mut colors = str_to_line_vec(split_s[7].as_str());
+
+        let mut editor = file_parts.get("Editor").unwrap().clone();
+        let mut metadata = file_parts.get("Metadata").unwrap().clone();
+        let mut difficulty = file_parts.get("Difficulty").unwrap().clone();
+        let mut events = file_parts.get("Events").unwrap().clone();
+        let mut timing_points = file_parts.get("TimingPoints").unwrap().clone();
+        // let mut colors = file_parts.get("Colours").unwrap().clone();
+
+        difficulty = difficulty
+            .into_iter()
+            .filter(|item| !item.is_empty())
+            .collect();
+        timing_points = timing_points
+            .into_iter()
+            .filter(|item| !item.is_empty())
+            .collect();
+
+        // let beatmap_str = split_s[8].trim();
+        // let beatmap_vec = str_to_line_vec(split_s[8].as_str());
+        let beatmap_vec: Vec<String> = file_parts
+            .get("HitObjects")
+            .unwrap()
+            .clone()
+            .into_iter()
+            .filter(|item| !item.is_empty())
+            .collect();
+
+        // beatmap_vec = beatmap_vec
+        //     .into_iter()
+        //     .filter(|item| !item.is_empty())
+        //     .collect();
+
+        let mut osu_beatmap = OsuBeatmap::default();
+
+        let difficulty_split = difficulty
+            .iter()
+            .map(|org| {
+                let items = org
+                    .split(":")
+                    .map(|x| x.to_string())
+                    .collect::<Vec<String>>();
+                (items[0].to_owned(), items[1].parse::<f32>().unwrap())
+            })
+            .collect::<Vec<(String, f32)>>();
+
+        for (name, value) in difficulty_split {
+            match name.as_str() {
+                "HPDrainRate" => osu_beatmap.difficulty.hp_drain = value,
+                "CircleSize" => osu_beatmap.difficulty.circle_size = value,
+                "OverallDifficulty" => osu_beatmap.difficulty.overall_diff = value,
+                "ApproachRate" => osu_beatmap.difficulty.approach_rate = value,
+                "SliderMultiplier" => osu_beatmap.difficulty.slider_multiplier = value,
+                "SliderTickRate" => osu_beatmap.difficulty.slider_tick_rate = value,
+                _ => {}
+            }
+        }
+        println!("diffs: {:?}", osu_beatmap.difficulty);
+
+        let timing_points_split: Vec<Vec<String>> = timing_points
+            .into_iter()
+            .map(|item| item.split(",").map(|s| s.to_string()).collect())
+            .collect();
+
+        let mut timing_points_real: Vec<OsuTimingPoint> = vec![];
+        for timing_point_string_vec in timing_points_split {
+            // let mut timing_point: OsuTimingPoint = OsuTimi
+            let mut x: (i32, f32, i32, i32, i32, i32, bool, i32) = (0, 0.0, 0, 0, 0, 0, false, 0);
+            // println!("timing point {:?}", timing_point_string_vec);
+            for (i, item) in timing_point_string_vec.into_iter().enumerate() {
+                if i == 1 {
+                    *(x.get_field_mut(i).unwrap()) = item.parse::<f32>().unwrap();
+                } else if i == 6 {
+                    *(x.get_field_mut(i).unwrap()) = item.parse::<i32>().unwrap() == 1;
+                } else {
+                    *(x.get_field_mut(i).unwrap()) = item.parse::<i32>().unwrap();
+                }
+            }
+            timing_points_real.push(OsuTimingPoint::from_tuple(x));
+        }
+        osu_beatmap.timing_points = timing_points_real;
+
+        // println!("{:?}", timing_points_real);
+
+        // for i in timings_split {
+        //     println!("{}", i.len());
+        // }
+        // println!("timings: {:?}", timing_points_split);
+
+        // osu_beatmap.difficulty = difficulty_split[2].1.parse().unwrap();
+
+        // println!("{:?}", split_s);
+
+        for beat in beatmap_vec {
+            let beat_info = beat
+                .split(",")
+                .map(|x| return x.to_string())
+                .collect::<Vec<String>>();
+
+            let type_u: u8 = beat_info[3].parse().unwrap();
+            let type_bits = (0..8).map(|i| (type_u >> i) & 1).collect::<Vec<u8>>();
+
+            let hitobjecttype: OsuHitObjectType;
+            let combostart: bool;
+            if type_bits[2] == 1 {
+                combostart = true;
+            } else {
+                combostart = false;
+            }
+            if type_bits[0] == 1 {
+                hitobjecttype = OsuHitObjectType::Circle(combostart);
+            } else if type_bits[1] == 1 {
+                hitobjecttype = OsuHitObjectType::Slider(combostart);
+            } else if type_bits[3] == 1 {
+                hitobjecttype = OsuHitObjectType::Spinner(combostart);
+            } else {
+                return Err(OsuBeatmapError::Io(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Hit object not registered",
+                )));
+            }
+
+            let x: i32 = beat_info[0].parse().unwrap();
+            let y: i32 = beat_info[1].parse().unwrap();
+            let t: f32 = beat_info[2].parse::<f32>().unwrap() / 1000.0;
+
+            // println!("{:?}", beat_info);
+
+            let mut slider: Option<Slider> = None;
+            if let OsuHitObjectType::Slider(_) = hitobjecttype {
+                // let sliderinfo = &beat_info[5..=7];
+                let curvesinfo = &beat_info[5];
+                let mut curve_vec = curvesinfo
+                    .split("|")
+                    .map(|x| return x.to_string())
+                    .collect::<Vec<String>>();
+
+                let curve_type_s = curve_vec.remove(0);
+
+                // println!("CurveType: {}", curve_type_s);
+
+                let curve_type = match curve_type_s.as_str() {
+                    "B" => CurveType::Bezier,
+                    "C" => CurveType::Centripetal,
+                    "L" => CurveType::Linear,
+                    "P" => CurveType::PerfectCircle,
+                    _ => {
+                        return Err(OsuBeatmapError::Io(std::io::Error::new(
+                            std::io::ErrorKind::Other,
+                            "Invalid crve type",
+                        )));
+                    }
+                };
+
+                let curve_points: Vec<Point> = curve_vec
+                    .into_iter()
+                    .map(|item| {
+                        let point_vec = item
+                            .split(":")
+                            .map(|x| x.parse::<i32>().unwrap())
+                            .collect::<Vec<i32>>();
+                        Point {
+                            x: point_vec[0],
+                            y: point_vec[1],
+                        }
+                    })
+                    .collect();
+
+                let slides = beat_info[6].parse::<usize>().unwrap();
+                let length = beat_info[7].parse::<f64>().unwrap();
+
+                slider = Some(Slider {
+                    curve_type,
+                    curve_points,
+                    trcurve_points: vec![],
+                    slides,
+                    length,
+                });
+            }
+
+            let hitobj = OsuHitObject {
+                pos: Point { x, y },
+                trpos: None,
+                time: t,
+                hitobjecttype: hitobjecttype.clone(),
+                hitsound: OsuHitSound::Normal,
+                slider_params: slider,
+                spinner_params: None,
+                ..Default::default()
+            };
+
+            // println!("{:?}", hitobj);
+            // println!("{:?}", type_bits);
+            // println!("{:?}", beat_info);
+
+            osu_beatmap.hit_objects.push(hitobj);
+
+            // println!("-----");
+        }
+
+        osu_beatmap.real_approach_time = 1.2;
+
+        Ok(osu_beatmap)
+    }
 }
 
 fn str_to_line_vec(s: &str) -> Vec<String> {
@@ -585,255 +833,43 @@ fn str_to_line_vec(s: &str) -> Vec<String> {
 use std::collections::HashMap;
 
 //std::io::Result<OsuBeatmap>
-pub fn parse_osu_file(p: &Path) -> std::io::Result<OsuBeatmap> {
+pub fn parse_osu_file_fs(p: &Path) -> Result<OsuBeatmap, OsuBeatmapError> {
     let mut f = fs::File::open(p)?;
     let mut s = String::new();
-
     f.read_to_string(&mut s).unwrap();
-
-    let s_lines: Vec<&str> = s.split("\n").map(|line| line.trim()).collect();
-
-    let mut file_parts: HashMap<&str, Vec<String>> = HashMap::new();
-
-    let mut current: Vec<String> = Vec::new();
-    let mut name = None;
-    for line in s_lines {
-        if !(line.starts_with("[") && line.ends_with("]")) {
-            current.push(line.to_string());
-            continue;
-        }
-        // println!("Line: {}",line);
-
-        if name.is_none() {
-            name = Some(&line[1..line.len() - 1]);
-            continue;
-        }
-
-        file_parts.insert(name.unwrap(), current);
-        current = Vec::new();
-        name = Some(&line[1..line.len() - 1]);
-
-        // println!("{name:?}");
-    }
-    file_parts.insert(name.unwrap(), current);
-    // println!("File Parts: {:#?}", file_parts);
-
-    // for line in s.split("")
-
-    let mut split_s = s
-        .split("]\r")
-        .map(|x| return x.to_string())
-        .collect::<Vec<String>>();
-
-    // println!("{:#?}", s_lines);
-
-    // let mut general = str_to_line_vec(split_s[1].as_str());
-    // let mut editor = str_to_line_vec(split_s[2].as_str());
-    // let mut metadata = str_to_line_vec(split_s[3].as_str());
-    // let mut difficulty = str_to_line_vec(split_s[4].as_str());
-    // let mut events = str_to_line_vec(split_s[5].as_str());
-    // let mut timing_points = str_to_line_vec(split_s[6].as_str());
-    // let mut colors = str_to_line_vec(split_s[7].as_str());
-
-    let mut editor = file_parts.get("Editor").unwrap().clone();
-    let mut metadata = file_parts.get("Metadata").unwrap().clone();
-    let mut difficulty = file_parts.get("Difficulty").unwrap().clone();
-    let mut events = file_parts.get("Events").unwrap().clone();
-    let mut timing_points = file_parts.get("TimingPoints").unwrap().clone();
-    // let mut colors = file_parts.get("Colours").unwrap().clone();
-
-    difficulty = difficulty
-        .into_iter()
-        .filter(|item| !item.is_empty())
-        .collect();
-    timing_points = timing_points
-        .into_iter()
-        .filter(|item| !item.is_empty())
-        .collect();
-
-    // let beatmap_str = split_s[8].trim();
-    // let beatmap_vec = str_to_line_vec(split_s[8].as_str());
-    let beatmap_vec: Vec<String> = file_parts
-        .get("HitObjects")
-        .unwrap()
-        .clone()
-        .into_iter()
-        .filter(|item| !item.is_empty())
-        .collect();
-
-    // beatmap_vec = beatmap_vec
-    //     .into_iter()
-    //     .filter(|item| !item.is_empty())
-    //     .collect();
-
-    let mut osu_beatmap = OsuBeatmap::default();
-
-    let difficulty_split = difficulty
-        .iter()
-        .map(|org| {
-            let items = org
-                .split(":")
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>();
-            (items[0].to_owned(), items[1].parse::<f32>().unwrap())
-        })
-        .collect::<Vec<(String, f32)>>();
-
-    for (name, value) in difficulty_split {
-        match name.as_str() {
-            "HPDrainRate" => osu_beatmap.difficulty.hp_drain = value,
-            "CircleSize" => osu_beatmap.difficulty.circle_size = value,
-            "OverallDifficulty" => osu_beatmap.difficulty.overall_diff = value,
-            "ApproachRate" => osu_beatmap.difficulty.approach_rate = value,
-            "SliderMultiplier" => osu_beatmap.difficulty.slider_multiplier = value,
-            "SliderTickRate" => osu_beatmap.difficulty.slider_tick_rate = value,
-            _ => {}
-        }
-    }
-    println!("diffs: {:?}", osu_beatmap.difficulty);
-
-    let timing_points_split: Vec<Vec<String>> = timing_points
-        .into_iter()
-        .map(|item| item.split(",").map(|s| s.to_string()).collect())
-        .collect();
-
-    let mut timing_points_real: Vec<OsuTimingPoint> = vec![];
-    for timing_point_string_vec in timing_points_split {
-        // let mut timing_point: OsuTimingPoint = OsuTimi
-        let mut x: (i32, f32, i32, i32, i32, i32, bool, i32) = (0, 0.0, 0, 0, 0, 0, false, 0);
-        // println!("timing point {:?}", timing_point_string_vec);
-        for (i, item) in timing_point_string_vec.into_iter().enumerate() {
-            if i == 1 {
-                *(x.get_field_mut(i).unwrap()) = item.parse::<f32>().unwrap();
-            } else if i == 6 {
-                *(x.get_field_mut(i).unwrap()) = item.parse::<i32>().unwrap() == 1;
-            } else {
-                *(x.get_field_mut(i).unwrap()) = item.parse::<i32>().unwrap();
-            }
-        }
-        timing_points_real.push(OsuTimingPoint::from_tuple(x));
-    }
-    osu_beatmap.timing_points = timing_points_real;
-
-    // println!("{:?}", timing_points_real);
-
-    // for i in timings_split {
-    //     println!("{}", i.len());
-    // }
-    // println!("timings: {:?}", timing_points_split);
-
-    // osu_beatmap.difficulty = difficulty_split[2].1.parse().unwrap();
-
-    // println!("{:?}", split_s);
-
-    for beat in beatmap_vec {
-        let beat_info = beat
-            .split(",")
-            .map(|x| return x.to_string())
-            .collect::<Vec<String>>();
-
-        let type_u: u8 = beat_info[3].parse().unwrap();
-        let type_bits = (0..8).map(|i| (type_u >> i) & 1).collect::<Vec<u8>>();
-
-        let hitobjecttype: OsuHitObjectType;
-        let combostart: bool;
-        if type_bits[2] == 1 {
-            combostart = true;
-        } else {
-            combostart = false;
-        }
-        if type_bits[0] == 1 {
-            hitobjecttype = OsuHitObjectType::Circle(combostart);
-        } else if type_bits[1] == 1 {
-            hitobjecttype = OsuHitObjectType::Slider(combostart);
-        } else if type_bits[3] == 1 {
-            hitobjecttype = OsuHitObjectType::Spinner(combostart);
-        } else {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Hit object not registered",
-            ));
-        }
-
-        let x: i32 = beat_info[0].parse().unwrap();
-        let y: i32 = beat_info[1].parse().unwrap();
-        let t: f32 = beat_info[2].parse::<f32>().unwrap() / 1000.0;
-
-        // println!("{:?}", beat_info);
-
-        let mut slider: Option<Slider> = None;
-        if let OsuHitObjectType::Slider(_) = hitobjecttype {
-            // let sliderinfo = &beat_info[5..=7];
-            let curvesinfo = &beat_info[5];
-            let mut curve_vec = curvesinfo
-                .split("|")
-                .map(|x| return x.to_string())
-                .collect::<Vec<String>>();
-
-            let curve_type_s = curve_vec.remove(0);
-
-            // println!("CurveType: {}", curve_type_s);
-
-            let curve_type = match curve_type_s.as_str() {
-                "B" => CurveType::Bezier,
-                "C" => CurveType::Centripetal,
-                "L" => CurveType::Linear,
-                "P" => CurveType::PerfectCircle,
-                _ => {
-                    return Err(std::io::Error::new(
-                        std::io::ErrorKind::Other,
-                        "Invalid crve type",
-                    ));
-                }
-            };
-
-            let curve_points: Vec<Point> = curve_vec
-                .into_iter()
-                .map(|item| {
-                    let point_vec = item
-                        .split(":")
-                        .map(|x| x.parse::<i32>().unwrap())
-                        .collect::<Vec<i32>>();
-                    Point {
-                        x: point_vec[0],
-                        y: point_vec[1],
-                    }
-                })
-                .collect();
-
-            let slides = beat_info[6].parse::<usize>().unwrap();
-            let length = beat_info[7].parse::<f64>().unwrap();
-
-            slider = Some(Slider {
-                curve_type,
-                curve_points,
-                trcurve_points: vec![],
-                slides,
-                length,
-            });
-        }
-
-        let hitobj = OsuHitObject {
-            pos: Point { x, y },
-            trpos: None,
-            time: t,
-            hitobjecttype: hitobjecttype.clone(),
-            hitsound: OsuHitSound::Normal,
-            slider_params: slider,
-            spinner_params: None,
-            ..Default::default()
-        };
-
-        // println!("{:?}", hitobj);
-        // println!("{:?}", type_bits);
-        // println!("{:?}", beat_info);
-
-        osu_beatmap.hit_objects.push(hitobj);
-
-        // println!("-----");
-    }
-
-    osu_beatmap.real_approach_time = 1.2;
-
-    Ok(osu_beatmap)
+    OsuBeatmap::from_string(s)
 }
+
+use bevy::{
+    reflect::TypePath,
+};
+use thiserror::Error;
+
+#[non_exhaustive]
+#[derive(Debug, Error)]
+pub enum OsuBeatmapError {
+    /// An [IO](std::io) Error
+    #[error("Could not load asset: {0}")]
+    Io(#[from] std::io::Error),
+}
+
+
+
+// #[derive(Default, TypePath)]
+// struct OsuBeatmapLoader;
+// use bevy::asset::AsyncReadExt;
+// impl AssetLoader for OsuBeatmapLoader {
+//     type Asset = OsuBeatmap;
+//     type Settings = ();
+//     type Error = OsuBeatmapError;
+//     async fn load(
+//         &self,
+//         reader: &mut dyn Reader,
+//         _settings: &(),
+//         _load_context: &mut LoadContext<'_>,
+//     ) -> Result<Self::Asset, Self::Error> {
+//         let mut x = "".to_string();
+//         reader.read_to_string(&mut x).await.unwrap();
+//         OsuBeatmap::from_string(x)
+//     }
+// }

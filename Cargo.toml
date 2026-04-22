@@ -9,6 +9,7 @@ rand = "0.10.1"
 bevy_window = "0.18.1"
 bevy_vello = {version="0.13.1", features = ["svg"]}
 bevy_enoki = "0.6.0"
+thiserror = "2.0.18"
 
 [profile.dev.package."*"]
 opt-level = 3

@@ -34,7 +34,7 @@ pub fn load_osu_beatmap(
 
     let screen_size = window.size();
 
-    let mut beatmap = parse_osu_file(Path::new(&bmap_info.path)).unwrap();
+    let mut beatmap = parse_osu_file_fs(Path::new(&bmap_info.path)).unwrap();
 
     for hitobj in &mut beatmap.hit_objects {
         hitobj.trpos = Some(hitobj.pos.to_real_pos(screen_size));

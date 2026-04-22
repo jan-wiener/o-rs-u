@@ -167,8 +167,8 @@ fn setup_world(
     ));
 
     load_bmap_msg.write(LoadBeatmap {
-        path: "./assets/beatmaps/mirage_hard.osu".into(),
-        audio: "beatmaps/mirage.ogg".into(),
+        path: "./assets/beatmaps/hikarunara_hard.osu".into(),
+        audio: "beatmaps/hikarunara.mp3".into(),
     });
 
     commands

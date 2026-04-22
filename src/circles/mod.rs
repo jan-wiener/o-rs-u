@@ -93,6 +93,7 @@ pub fn summon_circle(
             };
             centcmds = commands.spawn((
                 circletr,
+                Visibility::Visible,
                 CircleInfo {
                     moment_t: osuhitobj.time,
                     original_pos: pos,
@@ -119,6 +120,7 @@ pub fn summon_circle(
                 circlemats.main.clone(),
                 circlemats.main_mat.clone(),
                 circletr,
+                Visibility::Visible,
                 CircleInfo {
                     moment_t: osuhitobj.time,
                     original_pos: pos,
