@@ -1,3 +1,5 @@
+use std::sync::Mutex;
+
 use bevy::prelude::*;
 use bevy_enoki::prelude::Rval;
 use bevy_enoki::{EnokiPlugin, Particle2dEffect};
@@ -5,9 +7,9 @@ use bevy_vello::vello::peniko::color::Srgb;
 
 mod beatmaps;
 mod circles;
+mod game_debug;
 mod osuparser;
 mod public_resources;
-mod game_debug;
 
 use crate::circles::etc::*;
 use crate::osuparser::OsuHitObject;
@@ -22,7 +24,8 @@ pub const WORLD_FG: RenderLayers = RenderLayers::layer(1);
 pub const SVG_MODE: bool = true;
 
 
-
+static BEATMAP_PATH: Mutex<&str> = Mutex::new("assets/beatmaps/hikarunara_hard.osu");
+static MUSIC_PATH: Mutex<&str> = Mutex::new("beatmaps/hikarunara.mp3");
 
 
 fn setup_world(
@@ -35,7 +38,6 @@ fn setup_world(
     window: Single<(&Window, Entity)>,
     mut load_bmap_msg: MessageWriter<LoadBeatmap>,
     mut general_info: ResMut<GeneralInfo>,
-
 ) {
     commands.spawn((
         Camera2d::default(), // replaces Camera2dBundle
@@ -106,14 +108,10 @@ fn setup_world(
     let main_svg = assets.load("skins/circle.svg");
     let slider_svg = assets.load("skins/circle_slider.svg");
 
-
-
-
     // let mut great_hit = assets.load("skins/particles/great.ron");
 
     // let great_hit_inner = particles.get_mut(great_hit.id()).unwrap();
     // great_hit_inner.linear_speed.as_mut().unwrap().0 = 10.0;
-
 
     commands.insert_resource(GlobalParticleEffects {
         great_hit: assets.load("skins/particles/great.ron"),
@@ -123,10 +121,8 @@ fn setup_world(
         tick_hit: assets.load("skins/particles/tick_hit.ron"),
         tick_miss: assets.load("skins/particles/tick_miss.ron"),
         tick_ok: assets.load("skins/particles/tick_ok.ron"),
-        done_scaling: false
+        done_scaling: false,
     });
-
-   
 
     commands.insert_resource(CircleMaterials {
         meh_mat,
@@ -167,8 +163,8 @@ fn setup_world(
     ));
 
     load_bmap_msg.write(LoadBeatmap {
-        path: "./assets/beatmaps/hikarunara_hard.osu".into(),
-        audio: "beatmaps/hikarunara.mp3".into(),
+        path: BEATMAP_PATH.lock().unwrap().to_owned(),
+        audio: MUSIC_PATH.lock().unwrap().to_owned()
     });
 
     commands
@@ -227,61 +223,32 @@ fn setup_world(
             TextColor(Color::srgb(1.0, 1.0, 1.0)),
         ));
 
-    
-    let spr = Sprite::from_color(Color::srgb(0.0,1.0, 0.0), Vec2::new(20.0,20.0));
+    let spr = Sprite::from_color(Color::srgb(0.0, 1.0, 0.0), Vec2::new(20.0, 20.0));
     commands.spawn((
         spr,
         Visibility::Hidden,
         Transform::from_xyz(0.0, 0.0, 960.0),
         WhatShouldIClick,
         WORLD_FG,
-
-
     ));
 
+    commands
+        .entity(window.1)
+        .insert((bevy_window::CursorIcon::Custom(
+            bevy_window::CustomCursor::Image(bevy_window::CustomCursorImage {
+                handle: assets.load("skins/helpers/crosshair.png"),
 
+                texture_atlas: None,
+                flip_x: false,
+                flip_y: false,
 
-
-
-
-    commands.entity(window.1).insert((
-        bevy_window::CursorIcon::Custom(bevy_window::CustomCursor::Image(bevy_window::CustomCursorImage {
-
-            handle: assets
-                .load("skins/helpers/crosshair.png"),
-
-            texture_atlas: None,
-            flip_x: false,
-            flip_y: false,
-
-            rect: None,
-            hotspot: (0, 0),
-        })),
-    ));
-
-
-
-
-
-
+                rect: None,
+                hotspot: (0, 0),
+            }),
+        ),));
 }
 
-// fn mouseclick_to_circle_summon(
-//     time: Res<Time>,
-//     mut mouse_info: ResMut<MouseInfo>,
-//     mouse_buttons: Res<ButtonInput<MouseButton>>,
-//     mut ringwriter: MessageWriter<SummonCircle>,
-// ) {
-//     if !mouse_buttons.just_pressed(MouseButton::Left) {
-//         return;
-//     }
-//     let mut rng = rand::rng();
-//     ringwriter.write(SummonCircle {
-//         size: 50.0,
-//         pos: mouse_info.pos,
-//         ring: Ring{original_scale: 1.7, time_to_shrink: rng.random::<f32>()},
-//     });
-// }
+
 
 use crate::osuparser::{OsuBeatmap, Point};
 use bevy::camera::visibility::RenderLayers;
@@ -290,7 +257,7 @@ use bevy_vello::render::VelloView;
 
 mod mouse_pos_system;
 
-fn main() {
+fn start_game() {
     // osuparser::parse_osu_file(Path::new("bad_apple.osu")).unwrap();
     // return;
 
@@ -323,7 +290,6 @@ fn main() {
     app.add_plugins(mouse_pos_system::MousePosPlugin);
     app.add_plugins(EnokiPlugin);
 
-    
     app.add_plugins(game_debug::GameDebugPlugin);
 
     let mut vello = VelloPlugin::default();
@@ -383,9 +349,8 @@ fn main() {
 
 
 
+fn main() {
+    start_game();
+    
 
-
-
-
-
-
+}
