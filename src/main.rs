@@ -1,9 +1,7 @@
 use std::sync::Mutex;
 
 use bevy::prelude::*;
-use bevy_enoki::prelude::Rval;
 use bevy_enoki::{EnokiPlugin, Particle2dEffect};
-use bevy_vello::vello::peniko::color::Srgb;
 
 mod beatmaps;
 mod circles;
@@ -30,11 +28,11 @@ static MUSIC_PATH: Mutex<&str> = Mutex::new("beatmaps/hikarunara.mp3");
 
 fn setup_world(
     assets: Res<AssetServer>,
-    mut particles: ResMut<Assets<Particle2dEffect>>,
+    _particles: ResMut<Assets<Particle2dEffect>>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    mut hitobj_writer: MessageWriter<OsuHitObject>,
+    _hitobj_writer: MessageWriter<OsuHitObject>,
     window: Single<(&Window, Entity)>,
     mut load_bmap_msg: MessageWriter<LoadBeatmap>,
     mut general_info: ResMut<GeneralInfo>,
@@ -84,10 +82,10 @@ fn setup_world(
     let circle_ring_handle = meshes.add(circle_ring);
     let circle_ring_mesh = Mesh2d(circle_ring_handle);
 
-    let mred = MeshMaterial2d(materials.add(Color::srgb(1.0, 0.0, 0.0)));
+    let _mred = MeshMaterial2d(materials.add(Color::srgb(1.0, 0.0, 0.0)));
     let mwhite = MeshMaterial2d(materials.add(Color::srgb(1.0, 1.0, 1.0)));
 
-    let circle_asset: Handle<Image> = assets.load("skins/circle.png");
+    let _circle_asset: Handle<Image> = assets.load("skins/circle.png");
     let mut m = ColorMaterial::default();
     // m.texture = Some(circle_asset);
 
@@ -169,7 +167,7 @@ fn setup_world(
 
     commands
         .spawn(
-            (Node {
+            Node {
                 width: percent(100),
                 height: percent(5),
                 top: percent(5),
@@ -177,7 +175,7 @@ fn setup_world(
                 justify_content: JustifyContent::Start,
                 align_content: AlignContent::Start,
                 ..Default::default()
-            }),
+            } ,
         )
         .with_child((
             ScoreGui,
@@ -187,7 +185,7 @@ fn setup_world(
         ));
     commands
         .spawn(
-            (Node {
+            Node {
                 width: percent(100),
                 height: percent(5),
                 top: percent(90),
@@ -195,7 +193,7 @@ fn setup_world(
                 justify_content: JustifyContent::Start,
                 align_content: AlignContent::End,
                 ..Default::default()
-            }),
+            } ,
         )
         .with_child((
             AccuracyGui,
@@ -206,7 +204,7 @@ fn setup_world(
 
     commands
         .spawn(
-            (Node {
+            Node {
                 width: percent(100),
                 height: percent(5),
                 top: percent(85),
@@ -214,7 +212,7 @@ fn setup_world(
                 justify_content: JustifyContent::Start,
                 align_content: AlignContent::End,
                 ..Default::default()
-            }),
+            } ,
         )
         .with_child((
             ComboGui,

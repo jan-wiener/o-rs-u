@@ -1,10 +1,6 @@
 use bevy::ecs::system::entity_command::despawn;
 use bevy::prelude::*;
-use bevy_enoki::ParticleEffectHandle;
-use bevy_enoki::ParticleSpawner;
-use bevy_enoki::prelude::OneShot;
 
-use crate::WORLD_FG;
 use crate::osuparser::*;
 use crate::public_resources::*;
 
@@ -28,14 +24,14 @@ pub fn circle_click(
     mouse_info: Res<MouseInfo>,
     mut circles_q: Query<(&Transform, &mut CircleInfo, Entity, &Children)>,
     mut ring_q: Query<(&mut Transform, &mut OsuRing, &ChildOf, &mut Visibility), Without<CircleInfo>>,
-    mut commands: Commands,
+    _commands: Commands,
     mut removewriter: MessageWriter<RemoveCircle>,
     mut slider_res: ResMut<MovingSlidersRes>,
     bmw: Res<BeatmapWorkerInfo>,
     osu: Res<OsuBeatmap>,
-    mut score: ResMut<ScoreInfo>,
+    _score: ResMut<ScoreInfo>,
     mut add_score_msg: MessageWriter<AddScore>,
-    mut particles: Res<GlobalParticleEffects>,
+    _particles: Res<GlobalParticleEffects>,
 ) {
     let mut click_count = 0;
     if kb.just_pressed(KeyCode::KeyZ) || mouse_button.just_pressed(MouseButton::Left) {
@@ -61,7 +57,7 @@ pub fn circle_click(
 
     let mut potential_entities: Vec<(Entity, f32)> = Vec::new();
 
-    for (tr, mut circleinfo, centity, children) in &mut circles_q {
+    for (tr, circleinfo, centity, _children) in &mut circles_q {
         if mouse_info.pos.distance(tr.translation.truncate()) <= circleinfo.size
             && !circleinfo.clicked
         {

@@ -1,4 +1,4 @@
-use std::{error::Error, fs, io::Read, path::Path};
+use std::{fs, io::Read, path::Path};
 
 use bevy::{math::f32, prelude::*, reflect::GetTupleField};
 
@@ -108,7 +108,7 @@ use std::f32::consts::PI;
 
 impl OsuHitObject {
     fn compute_points(&mut self) {
-        let pos = self.trpos.expect("Not converted pos");
+        let _pos = self.trpos.expect("Not converted pos");
         let slider_info = self.slider_params.as_ref().unwrap();
 
         self.slides = slider_info.slides;
@@ -119,7 +119,7 @@ impl OsuHitObject {
         let mut length = 0.0;
 
         let mut linear = || {
-            let mut key_points = slider_info.trcurve_points.clone();
+            let key_points = slider_info.trcurve_points.clone();
 
             *(&mut length) = etc::vec_vec2_len(&key_points);
             let steps = length / 10.0;
@@ -522,7 +522,7 @@ impl OsuBeatmap {
     ) -> (OsuTimingPoint, Option<OsuTimingPoint>) {
         let mut last_uninherited: &OsuTimingPoint = &DEFAULT_OSU_TIMING_POINT;
         let mut last_inherited_opt_ref: Option<&OsuTimingPoint> = None;
-        for (idx, timing) in self.timing_points.iter().enumerate() {
+        for (_idx, timing) in self.timing_points.iter().enumerate() {
             if timing.time < time_since_start {
                 if timing.uninherited {
                     last_uninherited = timing;
@@ -544,9 +544,9 @@ impl OsuBeatmap {
     }
 
     pub fn get_current_slider_velocity(&self, time_since_start: i32) -> f32 {
-        let (uninherited, inherited) = self.get_current_timing_points(time_since_start);
+        let (_uninherited, inherited) = self.get_current_timing_points(time_since_start);
         if let Some(inherited_inner) = inherited {
-            return (-100.0 / inherited_inner.beat_length);
+            return -100.0 / inherited_inner.beat_length ;
         } else {
             return 1.0;
         }
@@ -603,7 +603,7 @@ impl OsuBeatmap {
 
         // for line in s.split("")
 
-        let mut split_s = s
+        let _split_s = s
             .split("]\r")
             .map(|x| return x.to_string())
             .collect::<Vec<String>>();
@@ -618,10 +618,10 @@ impl OsuBeatmap {
         // let mut timing_points = str_to_line_vec(split_s[6].as_str());
         // let mut colors = str_to_line_vec(split_s[7].as_str());
 
-        let mut editor = file_parts.get("Editor").unwrap().clone();
-        let mut metadata = file_parts.get("Metadata").unwrap().clone();
+        let _editor = file_parts.get("Editor").unwrap().clone();
+        let _metadata = file_parts.get("Metadata").unwrap().clone();
         let mut difficulty = file_parts.get("Difficulty").unwrap().clone();
-        let mut events = file_parts.get("Events").unwrap().clone();
+        let _events = file_parts.get("Events").unwrap().clone();
         let mut timing_points = file_parts.get("TimingPoints").unwrap().clone();
         // let mut colors = file_parts.get("Colours").unwrap().clone();
 

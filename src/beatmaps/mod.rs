@@ -12,10 +12,10 @@ pub fn load_osu_beatmap(
     mut bmw: ResMut<BeatmapWorkerInfo>,
     time: Res<Time>,
     mut score_info: ResMut<ScoreInfo>,
-    mut general_info: ResMut<GeneralInfo>,
+    _general_info: ResMut<GeneralInfo>,
     mut commands: Commands, 
     asset_server: Res<AssetServer>,
-    mut audio: Single<Entity, With<GameAudio>>,
+    audio: Single<Entity, With<GameAudio>>,
     // mut playing_audio_opt: Option<Single<(&mut AudioSink), With<GameAudio>>>,
 ) {
     let mut bmap_info_opt: Option<LoadBeatmap> = None;
@@ -76,9 +76,9 @@ pub fn load_osu_beatmap(
 
 
 pub fn play_audio(
-    mut audio: Single<&mut AudioSink, With<GameAudio>>,
+    audio: Single<&mut AudioSink, With<GameAudio>>,
     time: Res<Time<Virtual>>,
-    mut bmw: ResMut<BeatmapWorkerInfo>,
+    bmw: ResMut<BeatmapWorkerInfo>,
 ) {
     let time_since_start = time.elapsed_secs() - bmw.started_at;
     if time_since_start > 0.0 && audio.is_paused() && !time.is_paused() {
@@ -90,7 +90,7 @@ pub fn play_audio(
 
 pub fn beatmap_worker(
     mut oho_msg: MessageWriter<OsuHitObject>,
-    mut osu: ResMut<OsuBeatmap>,
+    osu: ResMut<OsuBeatmap>,
     time: Res<Time>,
     mut bmw: ResMut<BeatmapWorkerInfo>,
     

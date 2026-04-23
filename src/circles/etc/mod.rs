@@ -5,7 +5,7 @@ use bevy::prelude::*;
 
 pub fn vec_vec2_len(vec2s: &[Vec2]) -> f32 {
     let mut total = 0.0;
-    let mut last: &Vec2;
+    let _last: &Vec2;
     for i in 1..vec2s.len() {
         total += vec2s[i - 1].distance(vec2s[i]);
     }

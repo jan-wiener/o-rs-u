@@ -1,7 +1,6 @@
-use std::time::Duration;
 
 use crate::osuparser::*;
-use bevy::{asset, platform::thread, prelude::*};
+use bevy::prelude::*;
 
 #[derive(Component)]
 pub struct OsuRing {

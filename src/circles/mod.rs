@@ -10,8 +10,6 @@ pub mod sliders;
 use crate::SVG_MODE;
 use crate::WORLD_BG;
 use crate::WORLD_FG;
-use crate::circles::catmull::*;
-use crate::circles::etc::*;
 use crate::osuparser::*;
 use crate::public_resources::*;
 use bevy::prelude::*;
@@ -19,19 +17,18 @@ use bevy_vello::prelude::VelloSvg2d;
 use bevy_vello::prelude::VelloSvgAnchor;
 
 use crate::CIRCLE_VISUAL_MULTIPLIER;
-use std::f32::consts::PI;
 
 pub fn summon_circle(
     circlemats: Res<CircleMaterials>,
     osu: Res<OsuBeatmap>,
-    window: Single<&Window>,
+    _window: Single<&Window>,
     mut circles_to_summon: ResMut<Messages<OsuHitObject>>,
     mut drawline_writer: MessageWriter<DrawLine>,
     mut drawtickwriter: MessageWriter<DrawTick>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    mut bmw: Res<BeatmapWorkerInfo>,
+    _meshes: ResMut<Assets<Mesh>>,
+    _materials: ResMut<Assets<ColorMaterial>>,
+    bmw: Res<BeatmapWorkerInfo>,
     time: Res<Time>,
     general_info: Res<GeneralInfo>,
 ) {
@@ -156,10 +153,10 @@ pub fn summon_circle(
 }
 
 pub fn change_material_system(
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    _meshes: ResMut<Assets<Mesh>>,
+    _materials: ResMut<Assets<ColorMaterial>>,
     mut query: Query<(&mut MeshMaterial2d<ColorMaterial>, &OsuRing)>,
-    mut bmw: Res<BeatmapWorkerInfo>,
+    bmw: Res<BeatmapWorkerInfo>,
     time: Res<Time>,
     osu: Res<OsuBeatmap>,
     circlemats: Res<CircleMaterials>,
@@ -190,7 +187,7 @@ pub fn change_material_system(
     }
 }
 
-pub fn what_should_i_click(mut commands: Commands, mut circles: Query<&CircleInfo>, mut marker: Single<(&mut Transform, &mut Visibility), With<WhatShouldIClick>>) {
+pub fn what_should_i_click(_commands: Commands, circles: Query<&CircleInfo>, mut marker: Single<(&mut Transform, &mut Visibility), With<WhatShouldIClick>>) {
     let mut first_circle: Option<(&CircleInfo, f32)> = None;
     for circle in circles {
         if circle.clicked {

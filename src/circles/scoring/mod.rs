@@ -56,7 +56,7 @@ use bevy_enoki::{ParticleEffectHandle, ParticleSpawner, prelude::OneShot};
 
 pub fn summon_particles(
     result: &HitScore,
-    mut pos: Vec3,
+    pos: Vec3,
     commands: &mut Commands,
     particles: &Res<GlobalParticleEffects>,
 ) {
