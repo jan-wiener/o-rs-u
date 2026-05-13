@@ -4,3 +4,6 @@ sound effects
 
 visual effects
 
+make the cli args compatible with normal paths for music files, not just relarive to assets paths
+probably just copy the path to a location in assets? 
+

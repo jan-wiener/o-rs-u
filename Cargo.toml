@@ -12,6 +12,7 @@ bevy_vello = {version="0.13.1", features = ["svg"]}
 bevy_enoki = "0.6.0"
 thiserror = "2.0.18"
 zip = "8.6.0"
+clap = { version = "4.6.1", features = ["derive"] }
 
 [profile.dev.package."*"]
 opt-level = 3

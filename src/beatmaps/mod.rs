@@ -75,7 +75,6 @@ pub fn load_osu_beatmap(
     ));
 
     gamebg.image = asset_server.load("bgs/".to_string() + &osu.osubg.filename);
-    // gamebg.image = asset_server.load("bgs/BG.jpeg");
 
     println!("{}", &osu.osubg.filename);
     gamebg.custom_size = Some(window.size());

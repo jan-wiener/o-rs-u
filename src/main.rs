@@ -2,12 +2,14 @@ use std::sync::Mutex;
 
 use bevy::prelude::*;
 use bevy_enoki::{EnokiPlugin, Particle2dEffect};
+use clap::Parser;
 
 mod beatmaps;
 mod circles;
 mod game_debug;
 mod osuparser;
 mod public_resources;
+mod cli;
 
 use crate::circles::etc::*;
 use crate::osuparser::OsuHitObject;
@@ -21,9 +23,18 @@ pub const WORLD_FG: RenderLayers = RenderLayers::layer(1);
 
 pub const SVG_MODE: bool = true;
 
+use std::sync::LazyLock;
 
-static BEATMAP_PATH: Mutex<&str> = Mutex::new("assets/beatmaps/hikarunara_hard.osu");
-static MUSIC_PATH: Mutex<&str> = Mutex::new("beatmaps/hikarunara.mp3");
+
+// static STATICSTRINGTEST: LazyLock<Mutex<String>> = LazyLock::new(|| {
+//     Mutex::new("Hey".to_string())
+// });
+
+// static BEATMAP_PATH: Mutex<&str> = Mutex::new("assets/beatmaps/hikarunara_hard.osu");
+// static MUSIC_PATH: Mutex<&str> = Mutex::new("beatmaps/hikarunara.mp3");
+
+static BEATMAP_PATH: LazyLock<Mutex<String>> = LazyLock::new(|| {Mutex::new("assets/beatmaps/hikarunara_hard.osu".to_string())});
+static MUSIC_PATH: LazyLock<Mutex<String>> = LazyLock::new(|| {Mutex::new("beatmaps/hikarunara.mp3".to_string())});
 
 
 fn setup_world(
@@ -265,8 +276,7 @@ mod mouse_pos_system;
 fn start_game() {
     // osuparser::parse_osu_file(Path::new("bad_apple.osu")).unwrap();
 
-    osuparser::unzipper::unzip_osufile("./440169 Goose house - Hikaru nara.osz").unwrap();
-    return;
+    
 
     let mut app = App::new();
 
@@ -357,6 +367,18 @@ fn start_game() {
 
 
 fn main() {
+    let args = cli::Args::parse();
+    args.do_the_thing();
+    // println!("args: {:?}", args);
+    
+
+
+    // let path_unzip = osuparser::unzipper::unzip_osufile("./440169 Goose house - Hikaru nara.osz", "beatmap_extract/440169 Goose house - Hikaru nara.osz").unwrap();
+    // println!("{}", path_unzip);
+    // osuparser::unzipper::get_osu_files_from_extracted_osz_file(&path_unzip).unwrap();
+    // return;
+
+
     start_game();
     
 
