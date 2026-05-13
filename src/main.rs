@@ -244,6 +244,13 @@ fn setup_world(
                 hotspot: (0, 0),
             }),
         ),));
+
+
+        commands.spawn((
+            Transform::default(),
+            Sprite::default(),
+            GameBackground
+        ));
 }
 
 
@@ -257,7 +264,9 @@ mod mouse_pos_system;
 
 fn start_game() {
     // osuparser::parse_osu_file(Path::new("bad_apple.osu")).unwrap();
-    // return;
+
+    osuparser::unzipper::unzip_osufile("./440169 Goose house - Hikaru nara.osz").unwrap();
+    return;
 
     let mut app = App::new();
 

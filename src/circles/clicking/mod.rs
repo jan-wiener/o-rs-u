@@ -17,7 +17,7 @@ pub fn remove_circle(
 }
 
 pub fn circle_click(
-    time: Res<Time<Fixed>>,
+    mut time: ResMut<Time<Virtual>>,
     mouse_button: Res<ButtonInput<MouseButton>>,
     kb: Res<ButtonInput<KeyCode>>,
 
@@ -29,10 +29,18 @@ pub fn circle_click(
     mut slider_res: ResMut<MovingSlidersRes>,
     bmw: Res<BeatmapWorkerInfo>,
     osu: Res<OsuBeatmap>,
-    _score: ResMut<ScoreInfo>,
+
     mut add_score_msg: MessageWriter<AddScore>,
-    _particles: Res<GlobalParticleEffects>,
+
 ) {
+
+    
+
+    if time.is_paused() {
+        return;
+    }
+
+    
     let mut click_count = 0;
     if kb.just_pressed(KeyCode::KeyZ) || mouse_button.just_pressed(MouseButton::Left) {
         click_count += 1

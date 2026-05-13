@@ -16,6 +16,8 @@ pub fn load_osu_beatmap(
     mut commands: Commands, 
     asset_server: Res<AssetServer>,
     audio: Single<Entity, With<GameAudio>>,
+    mut gamebg: Single<&mut Sprite, With<GameBackground>>,
+
     // mut playing_audio_opt: Option<Single<(&mut AudioSink), With<GameAudio>>>,
 ) {
     let mut bmap_info_opt: Option<LoadBeatmap> = None;
@@ -71,6 +73,18 @@ pub fn load_osu_beatmap(
         AudioPlayer::new(asset_server.load(bmap_info.audio)),
         PlaybackSettings::ONCE.paused()
     ));
+
+    gamebg.image = asset_server.load("bgs/".to_string() + &osu.osubg.filename);
+    // gamebg.image = asset_server.load("bgs/BG.jpeg");
+
+    println!("{}", &osu.osubg.filename);
+    gamebg.custom_size = Some(window.size());
+
+
+
+
+
+
 
 }
 

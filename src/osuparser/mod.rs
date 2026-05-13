@@ -1,4 +1,5 @@
 use std::{fs, io::Read, path::Path};
+pub mod unzipper;
 
 use bevy::{math::f32, prelude::*, reflect::GetTupleField};
 
@@ -108,7 +109,7 @@ use std::f32::consts::PI;
 
 impl OsuHitObject {
     fn compute_points(&mut self) {
-        let _pos = self.trpos.expect("Not converted pos");
+        // let _pos = self.trpos.expect("Not converted pos");
         let slider_info = self.slider_params.as_ref().unwrap();
 
         self.slides = slider_info.slides;
@@ -374,6 +375,16 @@ impl OsuTimingPoint {
     }
 }
 
+
+#[derive(Default)]
+pub struct OsuBackgroundEvent {
+    pub filename: String,
+    pub offset: Vec2,
+    pub real_offset: Vec2,
+}
+
+
+
 #[derive(Resource, Default, Asset, TypePath)]
 pub struct OsuBeatmap {
     pub hit_objects: Vec<OsuHitObject>,
@@ -389,6 +400,8 @@ pub struct OsuBeatmap {
     pub difficulty_score_multiplier: f32,
 
     pub screen_size: Vec2,
+
+    pub osubg: OsuBackgroundEvent,
 }
 
 const DEFAULT_OSU_TIMING_POINT: OsuTimingPoint = OsuTimingPoint {
@@ -504,6 +517,9 @@ impl OsuBeatmap {
             }
         }
 
+
+        self.osubg.real_offset = self.osubg.offset * (self.screen_size.y / 480.0);
+
         // let mut ticks = 0;
         // for osuhitobj in &self.hit_objects {
         //     if let OsuHitObjectType::Slider(_) = osuhitobj.hitobjecttype {
@@ -610,20 +626,43 @@ impl OsuBeatmap {
 
         // println!("{:#?}", s_lines);
 
-        // let mut general = str_to_line_vec(split_s[1].as_str());
-        // let mut editor = str_to_line_vec(split_s[2].as_str());
-        // let mut metadata = str_to_line_vec(split_s[3].as_str());
-        // let mut difficulty = str_to_line_vec(split_s[4].as_str());
-        // let mut events = str_to_line_vec(split_s[5].as_str());
-        // let mut timing_points = str_to_line_vec(split_s[6].as_str());
-        // let mut colors = str_to_line_vec(split_s[7].as_str());
 
         let _editor = file_parts.get("Editor").unwrap().clone();
         let _metadata = file_parts.get("Metadata").unwrap().clone();
         let mut difficulty = file_parts.get("Difficulty").unwrap().clone();
-        let _events = file_parts.get("Events").unwrap().clone();
+        let events = file_parts.get("Events").unwrap().clone();
         let mut timing_points = file_parts.get("TimingPoints").unwrap().clone();
         // let mut colors = file_parts.get("Colours").unwrap().clone();
+
+        let mut osubg: OsuBackgroundEvent = OsuBackgroundEvent::default();
+
+
+
+
+        println!("Events: \n{:?}", events);
+
+        for event in events {
+            if event.starts_with("//") {
+                continue;
+            }
+
+            if event.starts_with("0") {
+                let items: Vec<&str> = event.split(",").collect();
+                let mut fname = items[2].to_string();
+                fname = (&fname[1..fname.len()-1]).to_owned();
+                println!("Fname: {}", fname);
+                osubg.filename = fname;
+
+
+                let osubg_offset = Vec2::new(
+                    items[3].parse::<f32>().unwrap(),
+                    items[4].parse::<f32>().unwrap()
+                );
+                osubg.offset = osubg_offset;
+
+            }
+        }
+
 
         difficulty = difficulty
             .into_iter()
@@ -634,8 +673,7 @@ impl OsuBeatmap {
             .filter(|item| !item.is_empty())
             .collect();
 
-        // let beatmap_str = split_s[8].trim();
-        // let beatmap_vec = str_to_line_vec(split_s[8].as_str());
+
         let beatmap_vec: Vec<String> = file_parts
             .get("HitObjects")
             .unwrap()
@@ -644,12 +682,11 @@ impl OsuBeatmap {
             .filter(|item| !item.is_empty())
             .collect();
 
-        // beatmap_vec = beatmap_vec
-        //     .into_iter()
-        //     .filter(|item| !item.is_empty())
-        //     .collect();
+
 
         let mut osu_beatmap = OsuBeatmap::default();
+
+        osu_beatmap.osubg = osubg;
 
         let difficulty_split = difficulty
             .iter()

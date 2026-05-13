@@ -45,7 +45,7 @@ pub fn summon_circle(
 
         // let size = osu.get_real_circle_size(window.size());
         let points: Option<Vec<Vec2>> = osuhitobj.points;
-        let ticks = osuhitobj.ticks;
+        let ticks: Option<Vec<usize>> = osuhitobj.ticks;
         let segments: Option<usize> = None;
         let slides = osuhitobj.slides;
 

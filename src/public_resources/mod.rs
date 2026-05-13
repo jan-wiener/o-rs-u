@@ -392,3 +392,9 @@ pub struct WhatShouldIClick;
 
 #[derive(Component)]
 pub struct FpsGUI;
+
+
+
+
+#[derive(Component)]
+pub struct GameBackground;
