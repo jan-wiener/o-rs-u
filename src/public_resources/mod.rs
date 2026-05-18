@@ -204,7 +204,7 @@ pub struct SliderTick {
 #[derive(Message)]
 pub struct LoadBeatmap {
     pub path: String,
-    pub audio: String,
+    pub audio_override: Option<String>,
 }
 
 #[derive(Resource, Default)]

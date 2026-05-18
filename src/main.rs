@@ -35,6 +35,7 @@ use std::sync::LazyLock;
 
 static BEATMAP_PATH: LazyLock<Mutex<String>> = LazyLock::new(|| {Mutex::new("assets/beatmaps/hikarunara_hard.osu".to_string())});
 static MUSIC_PATH: LazyLock<Mutex<String>> = LazyLock::new(|| {Mutex::new("beatmaps/hikarunara.mp3".to_string())});
+static IMAGE_PATH: LazyLock<Mutex<Option<String>>> = LazyLock::new(|| {Mutex::new(None)});
 
 
 fn setup_world(
@@ -173,7 +174,7 @@ fn setup_world(
 
     load_bmap_msg.write(LoadBeatmap {
         path: BEATMAP_PATH.lock().unwrap().to_owned(),
-        audio: MUSIC_PATH.lock().unwrap().to_owned()
+        audio_override: None,  //MUSIC_PATH.lock().unwrap().to_owned()
     });
 
     commands
@@ -367,8 +368,11 @@ fn start_game() {
 
 
 fn main() {
-    let args = cli::Args::parse();
-    args.do_the_thing();
+    let mut cli = cli::Cli::from_args(cli::Args::parse());
+    if cli.uses_cli() {
+        cli.extract_osz_file().unwrap();
+    }
+    
     // println!("args: {:?}", args);
     
 

@@ -1,9 +1,7 @@
-use bevy::prelude::*;
-use crate::public_resources::*;
 use crate::osuparser::*;
+use crate::public_resources::*;
+use bevy::prelude::*;
 use std::path::Path;
-
-
 
 pub fn load_osu_beatmap(
     mut bmap_msg: ResMut<Messages<LoadBeatmap>>,
@@ -13,11 +11,10 @@ pub fn load_osu_beatmap(
     time: Res<Time>,
     mut score_info: ResMut<ScoreInfo>,
     _general_info: ResMut<GeneralInfo>,
-    mut commands: Commands, 
+    mut commands: Commands,
     asset_server: Res<AssetServer>,
     audio: Single<Entity, With<GameAudio>>,
     mut gamebg: Single<&mut Sprite, With<GameBackground>>,
-
     // mut playing_audio_opt: Option<Single<(&mut AudioSink), With<GameAudio>>>,
 ) {
     let mut bmap_info_opt: Option<LoadBeatmap> = None;
@@ -35,6 +32,8 @@ pub fn load_osu_beatmap(
     score_info.score = 0;
 
     let screen_size = window.size();
+
+    println!("bmp: {}", bmap_info.path);
 
     let mut beatmap = parse_osu_file_fs(Path::new(&bmap_info.path)).unwrap();
 
@@ -63,30 +62,34 @@ pub fn load_osu_beatmap(
     bmw.started_at = time.elapsed_secs() + 3.0;
     bmw.start = true;
 
-
-
     // audio.0.0 = asset_server.load("beatmaps/audio.ogg");
     // audio.1.paused = true;
+
+    let audiofile = bmap_info.audio_override.unwrap_or(osu.osumusicpath.clone());
+
+
     commands.entity(*audio).despawn();
     commands.spawn((
         GameAudio,
-        AudioPlayer::new(asset_server.load(bmap_info.audio)),
-        PlaybackSettings::ONCE.paused()
+        AudioPlayer::new(asset_server.load(audiofile)),
+        PlaybackSettings::ONCE.paused(),
     ));
 
-    gamebg.image = asset_server.load("bgs/".to_string() + &osu.osubg.filename);
+    {
+        let image_path_opt_guard = crate::IMAGE_PATH.lock().unwrap();
+
+        if let Some(img) = &*image_path_opt_guard {
+            gamebg.image = asset_server.load(img);
+        } else {
+            gamebg.image = asset_server.load("cli/".to_string() + &osu.osubg.filename);
+        }
+    }
+
+    
 
     println!("{}", &osu.osubg.filename);
     gamebg.custom_size = Some(window.size());
-
-
-
-
-
-
-
 }
-
 
 pub fn play_audio(
     audio: Single<&mut AudioSink, With<GameAudio>>,
@@ -99,14 +102,11 @@ pub fn play_audio(
     }
 }
 
-
-
 pub fn beatmap_worker(
     mut oho_msg: MessageWriter<OsuHitObject>,
     osu: ResMut<OsuBeatmap>,
     time: Res<Time>,
     mut bmw: ResMut<BeatmapWorkerInfo>,
-    
 ) {
     if !bmw.start {
         return;

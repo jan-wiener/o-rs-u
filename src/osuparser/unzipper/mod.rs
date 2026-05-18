@@ -8,16 +8,19 @@ pub fn unzip_osufile(path_zip: &str, path_unzip: &str) -> Result<String, Box<dyn
     let mut file = fs::File::open(path_zip)?;
     let mut archive = ZipArchive::new(file)?;
 
-    archive.extract(format!("./assets/{}", path_unzip))?;
+    // let truepathunzip = format!("./assets/{}", path_unzip);
+
+    println!("PUNZIP : {}", path_unzip);
+    archive.extract(path_unzip)?;
 
     Ok(path_unzip.into())
 }
 
 
 pub fn get_osu_files_from_extracted_osz_file(path_unzip: &str) -> Result<Vec<fs::DirEntry>, Box<dyn std::error::Error>> {
-    let p = format!("assets/{}", path_unzip);
-    println!("p: {}",p);
-    let folder = fs::read_dir(p)?;
+
+    // println!("p: {}",p);
+    let folder = fs::read_dir(path_unzip)?;
     let mut entries = vec![];
     for file_result in folder {
         let file = file_result?;
@@ -25,10 +28,11 @@ pub fn get_osu_files_from_extracted_osz_file(path_unzip: &str) -> Result<Vec<fs:
         
         let fname = file.file_name().to_str().unwrap().to_string();
         if fname.ends_with(".osu") {
-            println!("file: {:?}", fname);
+            // println!("file: {:?}", fname);
+            entries.push(file);
         }
 
-        entries.push(file);
+        
     }
     Ok(entries)
 }

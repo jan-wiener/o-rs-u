@@ -402,6 +402,7 @@ pub struct OsuBeatmap {
     pub screen_size: Vec2,
 
     pub osubg: OsuBackgroundEvent,
+    pub osumusicpath: String,
 }
 
 const DEFAULT_OSU_TIMING_POINT: OsuTimingPoint = OsuTimingPoint {
@@ -626,7 +627,7 @@ impl OsuBeatmap {
 
         // println!("{:#?}", s_lines);
 
-
+        let general = file_parts.get("General").unwrap().clone();
         let _editor = file_parts.get("Editor").unwrap().clone();
         let _metadata = file_parts.get("Metadata").unwrap().clone();
         let mut difficulty = file_parts.get("Difficulty").unwrap().clone();
@@ -636,7 +637,19 @@ impl OsuBeatmap {
 
         let mut osubg: OsuBackgroundEvent = OsuBackgroundEvent::default();
 
+        let mut osumusicpath: String = "".to_string();
 
+        for info in general {
+            if info.starts_with("AudioFilename") {
+                let split_info: Vec<&str> = info.split(":").collect();
+                let filename = split_info.last().expect("Should have a name").trim().to_string();
+
+                osumusicpath = "cli/".to_string() + &filename;
+
+
+                break
+            }
+        }
 
 
         println!("Events: \n{:?}", events);
@@ -687,6 +700,7 @@ impl OsuBeatmap {
         let mut osu_beatmap = OsuBeatmap::default();
 
         osu_beatmap.osubg = osubg;
+        osu_beatmap.osumusicpath = osumusicpath;
 
         let difficulty_split = difficulty
             .iter()
