@@ -1,116 +1,23 @@
+use std::f32::consts::PI;
 use std::{fs, io::Read, path::Path};
-pub mod unzipper;
 
-use bevy::{math::f32, prelude::*, reflect::GetTupleField};
-
-#[allow(dead_code)] // inner bools should be combo start identifiers. idk if I will implement it tho.
-#[derive(Debug, Clone)]
-pub enum OsuHitObjectType {
-    
-    Circle(bool),
-    Slider(bool),
-    Spinner(bool),
-    // Tick,
-    // SliderEnd,
-}
-impl Default for OsuHitObjectType {
-    fn default() -> Self {
-        Self::Circle(false)
-    }
-}
-
-impl OsuHitObjectType {
-    pub fn is_circle_like(&self) -> bool {
-        match self {
-            Self::Circle(_) | Self::Slider(_) => true,
-            _ => false,
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone)]
-enum OsuHitSound {
-    #[default]
-    Normal,
-    Whistle,
-    Finish,
-    Clap,
-}
-
-#[derive(Debug, Clone)]
-pub enum CurveType {
-    Bezier,
-    Centripetal,
-    Linear,
-    PerfectCircle,
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct Point {
-    pub x: i32,
-    pub y: i32,
-}
-impl Point {
-    pub fn to_vec2(&self) -> Vec2 {
-        Vec2::new(self.x as f32, self.y as f32)
-    }
-
-    pub fn to_real_pos(&self, screen_size: Vec2) -> Vec2 {
-        // let osu_to_window_ratio = (screen_size.y*0.8) / 384.0;
-        let osu_to_window_ratio = screen_size.y / 480.0;
-        // let osu_to_window_ratio = 1.0;
-
-        let original: Vec2 = self.to_vec2();
-
-        let original_from_middle = Vec2::new(original.x - 256.0, 192.0 - original.y);
-        let translated = original_from_middle * osu_to_window_ratio;
-
-        translated
-    }
-}
-impl Into<Vec2> for Point {
-    fn into(self) -> Vec2 {
-        Vec2::new(self.x as f32, self.y as f32)
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Slider {
-    pub curve_type: CurveType,
-    pub curve_points: Vec<Point>,
-    pub trcurve_points: Vec<Vec2>,
-    pub slides: usize,
-    // pub length: f64,
-}
-
-
-
-
-#[derive(Debug, Clone)]
-struct Spinner {}
-
-#[derive(Debug, Default, Message, Clone)]
-pub struct OsuHitObject {
-    pub pos: Point,
-    pub trpos: Option<Vec2>,
-    pub time: f32,
-    pub hitobjecttype: OsuHitObjectType,
-    pub hitsound: OsuHitSound,
-    pub slider_params: Option<Slider>,
-    pub spinner_params: Option<Spinner>,
-
-    pub ticks: Option<Vec<usize>>,
-    pub points: Option<Vec<Vec2>>,
-    pub segments: Option<usize>,
-    pub slides: usize,
-    pub length: f32,
-}
+use bevy::{
+    math::f32,
+    prelude::*,
+    reflect::{GetTupleField, TypePath},
+};
+use thiserror::Error;
 
 use crate::circles::bezier;
 use crate::circles::catmull;
 use crate::circles::etc;
 use crate::circles::etc::*;
-use std::f32::consts::PI;
+use std::collections::HashMap;
+
+pub mod unzipper;
+
+pub mod osutypes;
+use osutypes::*;
 
 impl OsuHitObject {
     fn compute_points(&mut self) {
@@ -281,84 +188,6 @@ impl OsuHitObject {
     }
 }
 
-#[derive(Debug)]
-pub struct OsuDifficulty {
-    pub hp_drain: f32,
-    pub circle_size: f32,
-    pub overall_diff: f32,
-    pub approach_rate: f32,
-    pub slider_multiplier: f32,
-    pub slider_tick_rate: f32,
-}
-
-impl Default for OsuDifficulty {
-    fn default() -> Self {
-        Self {
-            hp_drain: 5.0,
-            circle_size: 5.0,
-            approach_rate: 8.0,
-            overall_diff: 5.0,
-            slider_multiplier: 5.0,
-            slider_tick_rate: 1.0,
-        }
-    }
-}
-
-#[derive(Default)]
-pub struct RealHitWindow {
-    pub score300: f32,
-    pub score100: f32,
-    pub score50: f32,
-}
-
-#[derive(Default, Debug, Clone)]
-pub struct OsuTimingPoint {
-    pub time: i32,
-    pub beat_length: f32,
-    pub meter: i32,
-    pub sample_set: i32,
-    pub sample_index: i32,
-    pub volume: i32,
-    pub uninherited: bool,
-    pub effects: i32,
-}
-impl OsuTimingPoint {
-    fn new(
-        time: i32,
-        beat_length: f32,
-        meter: i32,
-        sample_set: i32,
-        sample_index: i32,
-        volume: i32,
-        uninherited: bool,
-        effects: i32,
-    ) -> Self {
-        Self {
-            time,
-            beat_length,
-            meter,
-            sample_set,
-            sample_index,
-            volume,
-            uninherited,
-            effects,
-        }
-    }
-    fn from_tuple(t: (i32, f32, i32, i32, i32, i32, bool, i32)) -> Self {
-        OsuTimingPoint::new(t.0, t.1, t.2, t.3, t.4, t.5, t.6, t.7)
-    }
-}
-
-
-#[derive(Default)]
-pub struct OsuBackgroundEvent {
-    pub filename: String,
-    pub offset: Vec2,
-    pub real_offset: Vec2,
-}
-
-
-
 #[derive(Resource, Default, Asset, TypePath)]
 pub struct OsuBeatmap {
     pub hit_objects: Vec<OsuHitObject>,
@@ -391,11 +220,9 @@ const DEFAULT_OSU_TIMING_POINT: OsuTimingPoint = OsuTimingPoint {
 };
 
 impl OsuBeatmap {
-
     //Score = ((700000 * combo_bonus / max_combo_bonus) + (300000 * ((accuracy_percentage / 100) ^ 10) * elapsed_objects / total_objects) + spinner_bonus) * mod_multiplier
     //return 500000 * Accuracy.Value * comboProgress +
-    //500000 * Math.Pow(Accuracy.Value, 5) * accuracyProgress 
-
+    //500000 * Math.Pow(Accuracy.Value, 5) * accuracyProgress
 
     pub fn calculate_score(&self, combo: usize, accuracy: f32, elapsed_objects: usize) -> usize {
         let accuracy_progress = (elapsed_objects as f32) / (self.hit_objects.len() as f32);
@@ -493,7 +320,6 @@ impl OsuBeatmap {
             }
         }
 
-
         self.osubg.real_offset = self.osubg.offset * (self.screen_size.y / 480.0);
 
         // let mut ticks = 0;
@@ -504,7 +330,6 @@ impl OsuBeatmap {
         // }
         // println!("Ticks: {}", ticks);
         // println!("Max Combo: {}", self.calc_max_combo());
-
 
         self.max_combo = self.calc_max_combo();
     }
@@ -539,7 +364,7 @@ impl OsuBeatmap {
     pub fn get_current_slider_velocity(&self, time_since_start: i32) -> f32 {
         let (_uninherited, inherited) = self.get_current_timing_points(time_since_start);
         if let Some(inherited_inner) = inherited {
-            return -100.0 / inherited_inner.beat_length ;
+            return -100.0 / inherited_inner.beat_length;
         } else {
             return 1.0;
         }
@@ -565,8 +390,6 @@ impl OsuBeatmap {
         let x = 54.4 - 4.48 * (self.difficulty.circle_size as f32);
         (self.screen_size.y / 480.0) * x
     }
-
-
 
     pub fn from_string(s: String) -> Result<Self, OsuBeatmapError> {
         let s_lines: Vec<&str> = s.split("\n").map(|line| line.trim()).collect();
@@ -620,15 +443,17 @@ impl OsuBeatmap {
         for info in general {
             if info.starts_with("AudioFilename") {
                 let split_info: Vec<&str> = info.split(":").collect();
-                let filename = split_info.last().expect("Should have a name").trim().to_string();
+                let filename = split_info
+                    .last()
+                    .expect("Should have a name")
+                    .trim()
+                    .to_string();
 
                 osumusicpath = "cli/".to_string() + &filename;
 
-
-                break
+                break;
             }
         }
-
 
         println!("Events: \n{:?}", events);
 
@@ -640,20 +465,17 @@ impl OsuBeatmap {
             if event.starts_with("0") {
                 let items: Vec<&str> = event.split(",").collect();
                 let mut fname = items[2].to_string();
-                fname = (&fname[1..fname.len()-1]).to_owned();
+                fname = (&fname[1..fname.len() - 1]).to_owned();
                 println!("Fname: {}", fname);
                 osubg.filename = fname;
 
-
                 let osubg_offset = Vec2::new(
                     items[3].parse::<f32>().unwrap(),
-                    items[4].parse::<f32>().unwrap()
+                    items[4].parse::<f32>().unwrap(),
                 );
                 osubg.offset = osubg_offset;
-
             }
         }
-
 
         difficulty = difficulty
             .into_iter()
@@ -664,7 +486,6 @@ impl OsuBeatmap {
             .filter(|item| !item.is_empty())
             .collect();
 
-
         let beatmap_vec: Vec<String> = file_parts
             .get("HitObjects")
             .unwrap()
@@ -672,8 +493,6 @@ impl OsuBeatmap {
             .into_iter()
             .filter(|item| !item.is_empty())
             .collect();
-
-
 
         let mut osu_beatmap = OsuBeatmap::default();
 
@@ -859,8 +678,6 @@ impl OsuBeatmap {
 //         .collect::<Vec<String>>()
 // }
 
-use std::collections::HashMap;
-
 //std::io::Result<OsuBeatmap>
 pub fn parse_osu_file_fs(p: &Path) -> Result<OsuBeatmap, OsuBeatmapError> {
     let mut f = fs::File::open(p)?;
@@ -869,11 +686,6 @@ pub fn parse_osu_file_fs(p: &Path) -> Result<OsuBeatmap, OsuBeatmapError> {
     OsuBeatmap::from_string(s)
 }
 
-use bevy::{
-    reflect::TypePath,
-};
-use thiserror::Error;
-
 #[non_exhaustive]
 #[derive(Debug, Error)]
 pub enum OsuBeatmapError {
@@ -881,24 +693,3 @@ pub enum OsuBeatmapError {
     #[error("Could not load asset: {0}")]
     Io(#[from] std::io::Error),
 }
-
-
-
-// #[derive(Default, TypePath)]
-// struct OsuBeatmapLoader;
-// use bevy::asset::AsyncReadExt;
-// impl AssetLoader for OsuBeatmapLoader {
-//     type Asset = OsuBeatmap;
-//     type Settings = ();
-//     type Error = OsuBeatmapError;
-//     async fn load(
-//         &self,
-//         reader: &mut dyn Reader,
-//         _settings: &(),
-//         _load_context: &mut LoadContext<'_>,
-//     ) -> Result<Self::Asset, Self::Error> {
-//         let mut x = "".to_string();
-//         reader.read_to_string(&mut x).await.unwrap();
-//         OsuBeatmap::from_string(x)
-//     }
-// }

@@ -1,5 +1,5 @@
 
-use crate::osuparser::*;
+use crate::osuparser::{*, osutypes::*};
 use bevy::prelude::*;
 
 #[derive(Component)]

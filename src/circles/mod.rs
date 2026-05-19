@@ -1,3 +1,17 @@
+use crate::SVG_MODE;
+use crate::WORLD_BG;
+use crate::WORLD_FG;
+use crate::osuparser::OsuBeatmap;
+use crate::osuparser::osutypes::OsuHitObject;
+use crate::osuparser::osutypes::OsuHitObjectType;
+use crate::public_resources::*;
+use bevy::prelude::*;
+use bevy_vello::prelude::VelloSvg2d;
+use bevy_vello::prelude::VelloSvgAnchor;
+
+use crate::CIRCLE_VISUAL_MULTIPLIER;
+
+
 pub mod bezier;
 pub mod catmull;
 pub mod clicking;
@@ -7,16 +21,6 @@ pub mod rings;
 pub mod scoring;
 pub mod sliders;
 
-use crate::SVG_MODE;
-use crate::WORLD_BG;
-use crate::WORLD_FG;
-use crate::osuparser::*;
-use crate::public_resources::*;
-use bevy::prelude::*;
-use bevy_vello::prelude::VelloSvg2d;
-use bevy_vello::prelude::VelloSvgAnchor;
-
-use crate::CIRCLE_VISUAL_MULTIPLIER;
 
 pub fn summon_circle(
     circlemats: Res<CircleMaterials>,

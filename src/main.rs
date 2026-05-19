@@ -1,14 +1,28 @@
 use std::path::Path;
 use std::sync::Mutex;
-
-use bevy::asset::io::AssetSourceId;
-
-use bevy::asset::{AssetPath, embedded_asset};
 use std::path::PathBuf;
-use bevy::prelude::*;
-use bevy_enoki::{EnokiPlugin, Particle2dEffect};
+use std::sync::LazyLock;
+
 use clap::Parser;
 
+use bevy::asset::io::AssetSourceId;
+use bevy::asset::{AssetPath, embedded_asset};
+use bevy::prelude::*;
+
+use bevy_enoki::{EnokiPlugin, Particle2dEffect};
+
+
+
+use crate::osuparser::{OsuBeatmap};
+use bevy::camera::visibility::RenderLayers;
+use bevy_vello::VelloPlugin;
+use bevy_vello::render::VelloView;
+
+use crate::circles::etc::*;
+use crate::osuparser::osutypes::*;
+use crate::public_resources::*;
+
+mod mouse_pos_system;
 mod beatmaps;
 mod circles;
 mod game_debug;
@@ -16,9 +30,9 @@ mod osuparser;
 mod public_resources;
 mod cli;
 
-use crate::circles::etc::*;
-use crate::osuparser::OsuHitObject;
-use crate::public_resources::*;
+
+
+
 
 const CIRCLE_VISUAL_MULTIPLIER: f32 = 0.8;
 
@@ -27,7 +41,7 @@ pub const WORLD_FG: RenderLayers = RenderLayers::layer(1);
 
 pub const SVG_MODE: bool = true;
 
-use std::sync::LazyLock;
+
 
 
 pub const CRATE_NAME: &str = "o_rs_u";
@@ -147,10 +161,10 @@ fn setup_world(
         slider_svg,
     });
 
-    let p = Point { x: 0, y: 0 };
+    // let p = Point { x: 0, y: 0 };
 
-    let pos = p.to_real_pos(window.0.size());
-    println!("{:?}", pos);
+    // let pos = p.to_real_pos(window.0.size());
+    // println!("{:?}", pos);
 
     let mut o = OsuHitObject::default();
     o.trpos = Some(Vec2::new(100.0, 100.0));
@@ -268,12 +282,7 @@ fn setup_world(
 
 
 
-use crate::osuparser::{OsuBeatmap, Point};
-use bevy::camera::visibility::RenderLayers;
-use bevy_vello::VelloPlugin;
-use bevy_vello::render::VelloView;
 
-mod mouse_pos_system;
 
 fn start_game() {
     // osuparser::parse_osu_file(Path::new("bad_apple.osu")).unwrap();

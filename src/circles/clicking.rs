@@ -1,6 +1,7 @@
 use bevy::ecs::system::entity_command::despawn;
 use bevy::prelude::*;
 
+use crate::osuparser::osutypes::OsuHitObjectType;
 use crate::osuparser::*;
 use crate::public_resources::*;
 
@@ -108,13 +109,8 @@ pub fn circle_click(
                 slider_res.sliders.push(MovingSlider {
                     entity,
                     started_at: time.elapsed_secs(),
-                    // target_slides: circleinfo.slides,
                 });
-                // ring_q
-                //     .get_mut(children.first().unwrap().to_owned())
-                //     .unwrap()
-                //     .1
-                //     .slider_mode = true;
+
             }
             _ => {}
         }

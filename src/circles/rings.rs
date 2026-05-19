@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
+use crate::osuparser::osutypes::OsuHitObjectType;
 use crate::public_resources::*;
-use crate::osuparser::*;
+use crate::osuparser::OsuBeatmap;
 
 
 pub fn shrink_ring(

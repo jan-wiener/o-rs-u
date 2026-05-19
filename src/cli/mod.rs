@@ -1,11 +1,7 @@
-
-
 use bevy::prelude::*;
 use std::fs;
-
 use clap::Parser;
 use thiserror::Error;
-
 use crate::osuparser;
 
 
@@ -16,7 +12,6 @@ enum ArgError {
     #[error("Incorrect argument combination")]
     ArgumentNotSupplied,
 }
-
 
 
 #[derive(Parser, Debug)]

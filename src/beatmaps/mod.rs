@@ -1,4 +1,5 @@
-use crate::osuparser::*;
+use crate::osuparser::osutypes::OsuHitObject;
+use crate::osuparser::{OsuBeatmap, parse_osu_file_fs};
 use crate::public_resources::*;
 use bevy::prelude::*;
 use std::path::Path;
