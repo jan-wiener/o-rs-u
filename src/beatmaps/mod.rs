@@ -84,6 +84,9 @@ pub fn load_osu_beatmap(
         } else {
             gamebg.image = asset_server.load("cli/".to_string() + &osu.osubg.filename);
         }
+        // let color = gamebg.color.saturation();
+        // gamebg.color.set_saturation(color * 0.1);
+
     }
 
     

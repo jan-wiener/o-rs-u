@@ -192,6 +192,13 @@ fn setup_world(
         audio_override: None,  //MUSIC_PATH.lock().unwrap().to_owned()
     });
 
+
+
+    let default_text_shadow = TextShadow{offset: Vec2::new(4.0,-4.0), color: Color::srgb(1.0, 0.0, 0.0)};
+    let default_text_size = (window.0.size().y / 1080.0) * 50.0;
+    let big_font = TextFont::from_font_size(default_text_size);
+    let small_font = TextFont::from_font_size(default_text_size * 0.8);
+
     commands
         .spawn(
             Node {
@@ -207,8 +214,9 @@ fn setup_world(
         .with_child((
             ScoreGui,
             Text::new("Score: "),
-            TextFont::from_font_size(50.0),
+            big_font.clone(),
             TextColor(Color::srgb(1.0, 1.0, 1.0)),
+            default_text_shadow,
         ));
     commands
         .spawn(
@@ -225,8 +233,9 @@ fn setup_world(
         .with_child((
             AccuracyGui,
             Text::new("Accuracy: "),
-            TextFont::from_font_size(50.0),
+            big_font,
             TextColor(Color::srgb(1.0, 1.0, 1.0)),
+            default_text_shadow,
         ));
 
     commands
@@ -244,8 +253,9 @@ fn setup_world(
         .with_child((
             ComboGui,
             Text::new("Combo: "),
-            TextFont::from_font_size(40.0),
+            small_font,
             TextColor(Color::srgb(1.0, 1.0, 1.0)),
+            default_text_shadow,
         ));
 
     let spr = Sprite::from_color(Color::srgb(0.0, 1.0, 0.0), Vec2::new(20.0, 20.0));
@@ -273,9 +283,13 @@ fn setup_world(
         ),));
 
 
+        let mut spr = Sprite::default();
+        println!("Color: {:?},", spr.color);
+        spr.color = Color::srgba(0.7, 0.7, 0.7, 1.0);
+        println!("Color: {:?},\n\n", spr.color);
         commands.spawn((
             Transform::default(),
-            Sprite::default(),
+            spr,
             GameBackground
         ));
 }
@@ -297,12 +311,14 @@ fn start_game() {
         DefaultPlugins
             .set(WindowPlugin {
                 primary_window: Some(Window {
-                    // resolution:
-                    //     bevy_window::WindowResolution::new(1920, 1080).with_scale_factor_override(1.0),
-                    resolution: bevy_window::WindowResolution::new(1400, 720)
-                        .with_scale_factor_override(1.0),
-                    mode: bevy_window::WindowMode::BorderlessFullscreen(MonitorSelection::Current),
-                    // mode: bevy_window::WindowMode::Windowed,
+                    resolution:
+                        bevy_window::WindowResolution::new(800, 600).with_scale_factor_override(1.0),
+                    mode: bevy_window::WindowMode::Windowed,
+
+                    // resolution: bevy_window::WindowResolution::new(1400, 720)
+                        // .with_scale_factor_override(1.0),
+                    // mode: bevy_window::WindowMode::BorderlessFullscreen(MonitorSelection::Current),
+                   
                     present_mode: bevy_window::PresentMode::AutoNoVsync,
                     ..Default::default()
                 }),

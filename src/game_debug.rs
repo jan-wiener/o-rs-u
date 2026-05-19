@@ -1,5 +1,8 @@
 use bevy::prelude::*;
+use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
+
 use crate::public_resources::FpsGUI;
+
 
 
 pub struct GameDebugPlugin;
@@ -12,7 +15,7 @@ impl Plugin for GameDebugPlugin {
     }
 }
 
-fn fps_component_add(mut commands: Commands) {
+fn fps_component_add(mut commands: Commands, window: Single<(&Window, Entity)>,) {
     let text = "";
     commands
         .spawn((Node {
@@ -31,7 +34,7 @@ fn fps_component_add(mut commands: Commands) {
                 Text::new(text.to_string()),
                 // TextFont::from_font_size(67.0),
                 TextFont {
-                    font_size: 60.0,
+                    font_size: window.0.height()/1080.0*60.0,
                     // font: asset_server.load("fonts/OptimusPrinceps.ttf"),
                     // font: load_embedded_asset!(&*asset_server, "eassets/fonts/OptimusPrinceps.ttf"),
                     ..default()
@@ -47,7 +50,7 @@ fn fps_component_add(mut commands: Commands) {
 }
 
 
-use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
+
 fn show_fps(mut fpsgui: Single<&mut Text, With<FpsGUI>>, diagnostics: Res<DiagnosticsStore>) {
     if let Some(fps) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS)
         && let Some(value) = fps.smoothed()
