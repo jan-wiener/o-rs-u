@@ -2,4 +2,4 @@
 /beatmaps_extract
 *.osu
 *.osz
-assets/cli
+src/assets/cli
