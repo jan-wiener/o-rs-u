@@ -1,2 +1,5 @@
 /target
 /beatmaps_extract
+*.osu
+*.osz
+assets/cli

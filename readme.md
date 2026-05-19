@@ -10,6 +10,8 @@
 ## Additional Information
 - For now, UI elements are loaded into the binary at compile time with bevy's embedded assets. I want to include a way to change the skin after compiling, but I will keep the default assets inside the binary.
 
+- There is probably a bug near timing points, where a slider might have different speed than it would have in osu!. This is mostly caused by the lack of documentation for specific things. 
+- The scoring system doesn't really work like it should. The score is basically 95% combos.
 
 ## Opening a beatmap
 ```
