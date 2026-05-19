@@ -1,5 +1,10 @@
+use std::path::Path;
 use std::sync::Mutex;
 
+use bevy::asset::io::AssetSourceId;
+use bevy::asset::io::embedded::EmbeddedAssetRegistry;
+use bevy::asset::{AssetPath, embedded_asset, embedded_path, load_embedded_asset};
+use std::path::PathBuf;
 use bevy::prelude::*;
 use bevy_enoki::{EnokiPlugin, Particle2dEffect};
 use clap::Parser;
@@ -26,16 +31,25 @@ pub const SVG_MODE: bool = true;
 use std::sync::LazyLock;
 
 
-// static STATICSTRINGTEST: LazyLock<Mutex<String>> = LazyLock::new(|| {
-//     Mutex::new("Hey".to_string())
-// });
+pub const CRATE_NAME: &str = "o_rs_u";
 
-// static BEATMAP_PATH: Mutex<&str> = Mutex::new("assets/beatmaps/hikarunara_hard.osu");
-// static MUSIC_PATH: Mutex<&str> = Mutex::new("beatmaps/hikarunara.mp3");
 
 static BEATMAP_PATH: LazyLock<Mutex<String>> = LazyLock::new(|| {Mutex::new("assets/beatmaps/hikarunara_hard.osu".to_string())});
 static MUSIC_PATH: LazyLock<Mutex<String>> = LazyLock::new(|| {Mutex::new("beatmaps/hikarunara.mp3".to_string())});
 static IMAGE_PATH: LazyLock<Mutex<Option<String>>> = LazyLock::new(|| {Mutex::new(None)});
+
+
+
+// Get Embedded path
+pub fn gep(path: &str) -> AssetPath {
+    let path = String::from("assets/") + path;
+    let path = PathBuf::from(Path::new(CRATE_NAME).join(path));
+    let source = AssetSourceId::from("embedded");
+    let asset_path = AssetPath::from_path_buf(path).with_source(source);
+    return asset_path;
+
+}
+
 
 
 fn setup_world(
@@ -50,7 +64,7 @@ fn setup_world(
     mut general_info: ResMut<GeneralInfo>,
 ) {
     commands.spawn((
-        Camera2d::default(), // replaces Camera2dBundle
+        Camera2d::default(), 
         Camera {
             order: 0,
             ..default()
@@ -69,20 +83,7 @@ fn setup_world(
         WORLD_FG,
         VelloView,
     ));
-    // commands.spawn((
-    //     Camera2d::default(),
-    //     Camera {
-    //         order: 2,
-    //         clear_color: ClearColorConfig::None,
-    //         ..default()
-    //     },
-    //     WORLD_FG_EXTRA,
-    //     Cameraz2,
-    // ));
 
-    // commands.spawn((Camera2d::default(), Transform::from_xyz(0.0, 0.0, 1000.0), VelloView));
-
-    // let sprite = Sprite::from_color();
 
     general_info.real_circle_radius = 49.92 * (window.0.size().y / 480.0);
 
@@ -97,7 +98,7 @@ fn setup_world(
     let _mred = MeshMaterial2d(materials.add(Color::srgb(1.0, 0.0, 0.0)));
     let mwhite = MeshMaterial2d(materials.add(Color::srgb(1.0, 1.0, 1.0)));
 
-    let _circle_asset: Handle<Image> = assets.load("skins/circle.png");
+    let _circle_asset: Handle<Image> = assets.load(gep("skins/circle.png"));
     let mut m = ColorMaterial::default();
     // m.texture = Some(circle_asset);
 
@@ -115,8 +116,9 @@ fn setup_world(
     m.color = Color::srgba(0.6, 1.0, 0.0, alpha);
     let great_mat = MeshMaterial2d(materials.add(m));
 
-    let main_svg = assets.load("skins/circle.svg");
-    let slider_svg = assets.load("skins/circle_slider.svg");
+    // let main_svg = assets.load("skins/circle.svg");
+    let main_svg = assets.load(gep("skins/circle.svg"));
+    let slider_svg = assets.load(gep("skins/circle_slider.svg"));
 
     // let mut great_hit = assets.load("skins/particles/great.ron");
 
@@ -124,13 +126,13 @@ fn setup_world(
     // great_hit_inner.linear_speed.as_mut().unwrap().0 = 10.0;
 
     commands.insert_resource(GlobalParticleEffects {
-        great_hit: assets.load("skins/particles/great.ron"),
-        ok_hit: assets.load("skins/particles/ok.ron"),
-        meh_hit: assets.load("skins/particles/meh.ron"),
-        miss: assets.load("skins/particles/miss.ron"),
-        tick_hit: assets.load("skins/particles/tick_hit.ron"),
-        tick_miss: assets.load("skins/particles/tick_miss.ron"),
-        tick_ok: assets.load("skins/particles/tick_ok.ron"),
+        great_hit: assets.load(gep("skins/particles/great.ron")),
+        ok_hit: assets.load(gep("skins/particles/ok.ron")),
+        meh_hit: assets.load(gep("skins/particles/meh.ron")),
+        miss: assets.load(gep("skins/particles/miss.ron")),
+        tick_hit: assets.load(gep("skins/particles/tick_hit.ron")),
+        tick_miss: assets.load(gep("skins/particles/tick_miss.ron")),
+        tick_ok: assets.load(gep("skins/particles/tick_ok.ron")),
         done_scaling: false,
     });
 
@@ -246,7 +248,7 @@ fn setup_world(
         .entity(window.1)
         .insert((bevy_window::CursorIcon::Custom(
             bevy_window::CustomCursor::Image(bevy_window::CustomCursorImage {
-                handle: assets.load("skins/helpers/crosshair.png"),
+                handle: assets.load(gep("skins/helpers/crosshair.png")),
 
                 texture_atlas: None,
                 flip_x: false,
@@ -281,6 +283,8 @@ fn start_game() {
 
     let mut app = App::new();
 
+    
+
     app.add_plugins(
         DefaultPlugins
             .set(WindowPlugin {
@@ -304,6 +308,7 @@ fn start_game() {
                 },
             }),
     );
+
 
     app.add_plugins(mouse_pos_system::MousePosPlugin);
     app.add_plugins(EnokiPlugin);
@@ -360,6 +365,28 @@ fn start_game() {
         ),
     );
 
+
+    embedded_asset!(app, "assets/skins/circle.svg");
+    embedded_asset!(app, "assets/skins/circle.png");
+    embedded_asset!(app, "assets/skins/circle_slider.svg");
+    embedded_asset!(app, "assets/skins/circle_slider.svg");
+    embedded_asset!(app, "assets/skins/particles/great.ron");
+    embedded_asset!(app, "assets/skins/particles/meh.ron");
+    embedded_asset!(app, "assets/skins/particles/miss.ron");
+    embedded_asset!(app, "assets/skins/particles/ok.ron");
+    embedded_asset!(app, "assets/skins/particles/tick_hit.ron");
+    embedded_asset!(app, "assets/skins/particles/tick_miss.ron");
+    embedded_asset!(app, "assets/skins/particles/tick_ok.ron");
+    embedded_asset!(app, "assets/skins/helpers/crosshair.png");
+
+
+
+
+
+
+
+    // println!("{:?}",embedded_path!("assets/skins/circle.svg"));
+
     // app.add_systems(FixedUpdate, circles::clicking::circle_click);
 
     app.run();
@@ -369,7 +396,7 @@ fn start_game() {
 
 fn main() {
     let mut cli = cli::Cli::from_args(cli::Args::parse());
-    if cli.uses_cli() {
+    if cli.uses_cli {
         cli.extract_osz_file().unwrap();
     }
     

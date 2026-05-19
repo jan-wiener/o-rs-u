@@ -10,7 +10,7 @@ pub fn unzip_osufile(path_zip: &str, path_unzip: &str) -> Result<String, Box<dyn
 
     // let truepathunzip = format!("./assets/{}", path_unzip);
 
-    println!("PUNZIP : {}", path_unzip);
+    // println!("PUNZIP : {}", path_unzip);
     archive.extract(path_unzip)?;
 
     Ok(path_unzip.into())

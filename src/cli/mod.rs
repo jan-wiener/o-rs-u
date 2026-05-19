@@ -22,19 +22,8 @@ enum ArgError {
 #[derive(Parser, Debug)]
 #[command(name = "Orsu Cli", about = "Orsu, the legendary rust rewrite")]
 pub struct Args {
-    /// Should Use CLI?
-    #[arg(short, long, default_value_t = false)]
-    cli: bool,
-
-    // /// Osu File
-    // #[arg(short, long)]
-    // osufile: Option<String>,
-    // /// Music File
-    // #[arg(short, long)]
-    // musicfile: Option<String>,
 
     /// Osz File
-    #[arg(short, long)]
     oszfile: Option<String>,
 
 }
@@ -42,6 +31,8 @@ pub struct Args {
 
 pub struct Cli {
     args: Args,
+
+    pub uses_cli: bool,
 
     converted: bool,
 }
@@ -64,20 +55,21 @@ pub fn input() -> String {
 impl Cli {
     pub fn from_args(args: Args) -> Self {
         Self {
+            uses_cli: args.oszfile.is_some(),
             args,
             converted: false,
         }
     }
 
     pub fn extract_osz_file(&mut self) -> Result<(), Box<dyn std::error::Error>>{
-        if !self.uses_cli() {
+        if !self.uses_cli {
             return Err(Box::new(ArgError::IsNotCli));
         }
         let _ = fs::remove_dir_all("assets/cli");
 
 
         let osz_extract_path = osuparser::unzipper::unzip_osufile(&self.args.oszfile.as_ref().ok_or(ArgError::ArgumentNotSupplied)?, "assets/cli")?;
-        println!("osz_extract_path: {}", osz_extract_path);
+
         let osu_files = osuparser::unzipper::get_osu_files_from_extracted_osz_file(&osz_extract_path).unwrap();
 
 
@@ -99,9 +91,7 @@ impl Cli {
 
 
 
-    pub fn uses_cli(&self) -> bool {
-        self.args.cli
-    }
+
 
     // pub fn copy_and_convert(&mut self) -> Result<(), Box<dyn std::error::Error>> {
     //     fs::copy(self.args.osufile.as_ref().ok_or(ArgError::ArgumentNotSupplied)?, "assets/cli/beatmap.osu")?;
