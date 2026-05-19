@@ -42,8 +42,6 @@ pub fn shrink_ring(
                     slider_res.sliders.push(MovingSlider {
                         entity: ch.parent(),
                         started_at: time.elapsed_secs(),
-                        // target_slides: circle.slides,
-                        done_slides: 0,
                     });
                     ring.slider_mode = true;
                 }

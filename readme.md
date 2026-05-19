@@ -2,14 +2,19 @@
 ## osu! rewritten in Rust, with bevy game engine
 
 ## Features:
-- Terrible codebase - I could optimize/refactor/rewrite, but I don't want to
-- Worse performance than original osu! (without capped FPS)
-- Inputs based on rendering fps (thanks, bevy) -> more fps = better input latency
-- Currently no gui for setting/importing maps, no way to import maps directly
-- Currently only very "debug" feeling style
+- Terrible codebase - Bad practices are used often - I wanted to make a compromise on code readablitiy and ease of writing the code. However, success was very limited.
+- Actually better performance than osu! (2-4x faster on my hardware)
+- Inputs based on rendering frames -> more fps = better input latency (as opposed to osu!, which apparently has a thread for rendering and a separate thread for input - a benefit of building from the ground up without a game engine)
+- No GUI for browsing maps, the only way to open custom maps is through the cli
+
+## Additional Information
+- For now, UI elements are loaded into the binary at compile time with bevy's embedded assets. I want to include a way to change the skin after compiling, but I will keep the default assets inside the binary.
 
 
-Enjoy!
+## Opening a beatmap
+```
+o-rs-u <path-to-beatmap>
+```
 
 
 ## Compiling
@@ -17,3 +22,5 @@ Use cargo, build with:
 ```
 cargo build --release
 ```
+
+Enjoy!

@@ -14,9 +14,9 @@ impl CubicSegment2d {
         (((self.a * u) + self.b) * u + self.c) * u + self.d
     }
 
-    fn tangent(&self, u: f32) -> Vec2 {
-        (3.0 * self.a * u + 2.0 * self.b) * u + self.c
-    }
+    // fn tangent(&self, u: f32) -> Vec2 {
+    //     (3.0 * self.a * u + 2.0 * self.b) * u + self.c
+    // }
 
     fn length(&self, steps: usize) -> f32 {
         let mut total = 0.0;
@@ -99,35 +99,29 @@ impl CentripetalCatmullRomSpline2d {
         Self { segments }
     }
 
-    pub fn sample(&self, t: f32) -> Vec2 {
-        let max_t = self.segments.len() as f32;
-        let t = t.clamp(0.0, max_t);
+    // pub fn sample(&self, t: f32) -> Vec2 {
+    //     let max_t = self.segments.len() as f32;
+    //     let t = t.clamp(0.0, max_t);
+    //     let mut seg_idx = t.floor() as usize;
+    //     let mut u = t - seg_idx as f32;
+    //     if seg_idx >= self.segments.len() {
+    //         seg_idx = self.segments.len() - 1;
+    //         u = 1.0;
+    //     }
+    //     self.segments[seg_idx].sample(u)
+    // }
 
-        let mut seg_idx = t.floor() as usize;
-        let mut u = t - seg_idx as f32;
-
-        if seg_idx >= self.segments.len() {
-            seg_idx = self.segments.len() - 1;
-            u = 1.0;
-        }
-
-        self.segments[seg_idx].sample(u)
-    }
-
-    pub fn tangent(&self, t: f32) -> Vec2 {
-        let max_t = self.segments.len() as f32;
-        let t = t.clamp(0.0, max_t);
-
-        let mut seg_idx = t.floor() as usize;
-        let mut u = t - seg_idx as f32;
-
-        if seg_idx >= self.segments.len() {
-            seg_idx = self.segments.len() - 1;
-            u = 1.0;
-        }
-
-        self.segments[seg_idx].tangent(u)
-    }
+    // pub fn tangent(&self, t: f32) -> Vec2 {
+    //     let max_t = self.segments.len() as f32;
+    //     let t = t.clamp(0.0, max_t);
+    //     let mut seg_idx = t.floor() as usize;
+    //     let mut u = t - seg_idx as f32;
+    //     if seg_idx >= self.segments.len() {
+    //         seg_idx = self.segments.len() - 1;
+    //         u = 1.0;
+    //     }
+    //     self.segments[seg_idx].tangent(u)
+    // }
 
     pub fn length(&self, steps_per_segment: usize) -> f32 {
         self.segments

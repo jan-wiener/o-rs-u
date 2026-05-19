@@ -5,28 +5,20 @@ use bevy::prelude::*;
 #[derive(Component)]
 pub struct OsuRing {
     pub moment_t: f32,
-    pub original_scale: f32,
-    pub slider_mode: bool, // time_to_shrink: f32,
+    pub slider_mode: bool, 
+
+    // pub original_scale: f32,
+    // time_to_shrink: f32,
 }
 impl OsuRing {
-    pub fn new(original_scale: f32, moment_t: f32) -> Self {
+    pub fn new(moment_t: f32) -> Self {
         Self {
-            original_scale,
             slider_mode: false,
             moment_t,
-            // time_to_shrink,
         }
     }
 }
-// impl Default for OsuRing {
-//     fn default() -> Self {
-//         Self {
-//             original_scale: 1.5,
-//             slider_mode: false,
-//             // time_to_shrink: 0.5,
-//         }
-//     }
-// }
+
 
 #[derive(Component)]
 pub struct CircleInfo {
@@ -34,7 +26,7 @@ pub struct CircleInfo {
     pub circle_type: OsuHitObjectType,
 
     pub points: Option<Vec<Vec2>>,
-    pub segments: Option<usize>,
+    
     pub slides: usize,
 
     pub slides_completed: usize,
@@ -46,6 +38,8 @@ pub struct CircleInfo {
     pub moment_t: f32,
 
     pub size: f32,
+
+    // pub segments: Option<usize>,
 }
 
 impl Default for CircleInfo {
@@ -59,7 +53,6 @@ impl Default for CircleInfo {
             slides_completed: 0,
             ticks: None,
             moment_t: 0.0,
-            segments: None,
             original_pos: Vec2::default(),
             slides: 1,
         }
@@ -152,15 +145,12 @@ impl GlobalParticleEffects {
     }
 }
 
-#[derive(Message)]
-pub struct StartMovingSlider {
-    pub entity: Entity,
-}
+
 
 pub struct MovingSlider {
     pub entity: Entity,
     pub started_at: f32,
-    pub done_slides: u32,
+    // pub done_slides: u32,
     // target_slides: u32
 }
 #[derive(Resource, Default)]
@@ -220,10 +210,14 @@ impl BeatmapWorkerInfo {
     }
 }
 
+
+
+
+// THINK THIS OVER - would a OnceLock be enough when I need to only read it? 
+// Or calculate each time? Considering I might want to implement dynamic scaling, this approach seems great for now
 #[derive(Resource, Default)]
 pub struct GeneralInfo {
     pub real_circle_radius: f32,
-    pub real_hit_window: f32,
 }
 
 #[derive(Clone)]
@@ -267,7 +261,7 @@ impl HitScore {
     }
 
     pub fn to_number(&self) -> i32 {
-        let mut score = 0;
+        let score;
         match self {
             HitScore::Great => {
                 score = 300;
@@ -333,10 +327,6 @@ pub struct AddScore {
 
 //Score = ((700000 * combo_bonus / max_combo_bonus) + (300000 * ((accuracy_percentage / 100) ^ 10) * elapsed_objects / total_objects) + spinner_bonus) * mod_multiplier
 impl AddScore {
-    pub fn new(score: HitScore) -> Self {
-        Self { score, pos: None }
-    }
-
     pub fn new_with_pos(score: HitScore, pos: Vec3) -> Self {
         Self {
             score,
@@ -381,8 +371,7 @@ pub struct GameAudio;
 #[derive(Component)]
 pub struct Cameraz0;
 
-#[derive(Component)]
-pub struct Cameraz2;
+
 
 
 

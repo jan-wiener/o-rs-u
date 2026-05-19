@@ -35,7 +35,7 @@ pub fn summon_circle(
     let time_since_start = ((time.elapsed_secs() - bmw.started_at) * 1000.0) as i32;
 
     for osuhitobj in circles_to_summon.drain() {
-        // println!("OsuHitObject found");
+
 
         let pos = osuhitobj.trpos.expect("somebody didnt convert pos");
 
@@ -43,10 +43,9 @@ pub fn summon_circle(
             continue;
         }
 
-        // let size = osu.get_real_circle_size(window.size());
+
         let points: Option<Vec<Vec2>> = osuhitobj.points;
         let ticks: Option<Vec<usize>> = osuhitobj.ticks;
-        let segments: Option<usize> = None;
         let slides = osuhitobj.slides;
 
         match osuhitobj.hitobjecttype {
@@ -99,7 +98,6 @@ pub fn summon_circle(
                     size: osu.get_real_circle_size(),
                     circle_type: osuhitobj.hitobjecttype,
                     points,
-                    segments,
                     slides,
                     slides_completed: 0,
                     last_pos_idx: 0,
@@ -126,7 +124,6 @@ pub fn summon_circle(
                     size: osu.get_real_circle_size(),
                     circle_type: osuhitobj.hitobjecttype,
                     points,
-                    segments,
                     slides,
                     slides_completed: 0,
                     last_pos_idx: 0,
@@ -139,7 +136,7 @@ pub fn summon_circle(
         let mut tr = Transform::from_translation(Vec3::splat(0.0));
         tr.scale = Vec3::splat(2.0);
 
-        let ring = OsuRing::new(2.0, osuhitobj.time);
+        let ring = OsuRing::new(osuhitobj.time);
 
         centcmds.with_child((
             circlemats.ring.clone(),

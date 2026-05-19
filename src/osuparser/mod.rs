@@ -3,8 +3,10 @@ pub mod unzipper;
 
 use bevy::{math::f32, prelude::*, reflect::GetTupleField};
 
+#[allow(dead_code)] // inner bools should be combo start identifiers. idk if I will implement it tho.
 #[derive(Debug, Clone)]
 pub enum OsuHitObjectType {
+    
     Circle(bool),
     Slider(bool),
     Spinner(bool),
@@ -78,8 +80,11 @@ pub struct Slider {
     pub curve_points: Vec<Point>,
     pub trcurve_points: Vec<Vec2>,
     pub slides: usize,
-    pub length: f64,
+    // pub length: f64,
 }
+
+
+
 
 #[derive(Debug, Clone)]
 struct Spinner {}
@@ -109,14 +114,10 @@ use std::f32::consts::PI;
 
 impl OsuHitObject {
     fn compute_points(&mut self) {
-        // let _pos = self.trpos.expect("Not converted pos");
         let slider_info = self.slider_params.as_ref().unwrap();
 
         self.slides = slider_info.slides;
-        // let tr_curve_points_inner = slider_info.trcurve_points;
         let mut points_inner: Vec<Vec2> = vec![];
-
-        // let iter_steps = (0..10).map(|x| x as f32 / 10.0);
         let mut length = 0.0;
 
         let mut linear = || {
@@ -197,33 +198,6 @@ impl OsuHitObject {
             }
             CurveType::Linear => {
                 linear();
-                // let mut key_points = slider_info.trcurve_points.clone();
-                // length = vec_vec2_len(&key_points);
-                // let steps = length / 10.0;
-                // println!("{:?}", key_points);
-                // for (idx, key_point) in key_points.iter().enumerate() {
-                //     if idx.checked_sub(1).is_some()
-                //         && let Some(last) = key_points.get(idx - 1)
-                //     {
-                //         let seg_length = key_point.distance(*last);
-                //         let seg_steps = seg_length / length * steps;
-                //         let seg_step_length = seg_length / seg_steps;
-                //         println!("{}, {}, {}", seg_length, seg_steps, seg_step_length);
-                //         let mut seg_length_covered = 0.0;
-                //         let mut next = last.clone();
-                //         loop {
-                //             let step = (key_point - last).normalize() * seg_step_length;
-                //             next = next + step;
-                //             seg_length_covered += step.length();
-                //             if seg_length_covered > seg_length {
-                //                 println!("broken");
-                //                 break;
-                //             }
-                //             points_inner.push(next);
-                //         }
-                //     }
-                // }
-                // println!("{:?}", points_inner);
             }
             CurveType::PerfectCircle => 'pc: {
                 let key_points = slider_info.trcurve_points.clone();
@@ -417,11 +391,12 @@ const DEFAULT_OSU_TIMING_POINT: OsuTimingPoint = OsuTimingPoint {
 };
 
 impl OsuBeatmap {
-    //Score = ((700000 * combo_bonus / max_combo_bonus) + (300000 * ((accuracy_percentage / 100) ^ 10) * elapsed_objects / total_objects) + spinner_bonus) * mod_multiplier
 
+    //Score = ((700000 * combo_bonus / max_combo_bonus) + (300000 * ((accuracy_percentage / 100) ^ 10) * elapsed_objects / total_objects) + spinner_bonus) * mod_multiplier
     //return 500000 * Accuracy.Value * comboProgress +
-    //500000 * Math.Pow(Accuracy.Value, 5) * accuracyProgress +
-    //bonusPortion;
+    //500000 * Math.Pow(Accuracy.Value, 5) * accuracyProgress 
+
+
     pub fn calculate_score(&self, combo: usize, accuracy: f32, elapsed_objects: usize) -> usize {
         let accuracy_progress = (elapsed_objects as f32) / (self.hit_objects.len() as f32);
         let combo_progress = (combo as f32) / (self.max_combo as f32);
@@ -528,8 +503,9 @@ impl OsuBeatmap {
         //     }
         // }
         // println!("Ticks: {}", ticks);
-
         // println!("Max Combo: {}", self.calc_max_combo());
+
+
         self.max_combo = self.calc_max_combo();
     }
 
@@ -589,6 +565,8 @@ impl OsuBeatmap {
         let x = 54.4 - 4.48 * (self.difficulty.circle_size as f32);
         (self.screen_size.y / 480.0) * x
     }
+
+
 
     pub fn from_string(s: String) -> Result<Self, OsuBeatmapError> {
         let s_lines: Vec<&str> = s.split("\n").map(|line| line.trim()).collect();
@@ -836,14 +814,14 @@ impl OsuBeatmap {
                     .collect();
 
                 let slides = beat_info[6].parse::<usize>().unwrap();
-                let length = beat_info[7].parse::<f64>().unwrap();
+                // let length = beat_info[7].parse::<f64>().unwrap();
 
                 slider = Some(Slider {
                     curve_type,
                     curve_points,
                     trcurve_points: vec![],
                     slides,
-                    length,
+                    // length,
                 });
             }
 
@@ -873,13 +851,13 @@ impl OsuBeatmap {
     }
 }
 
-fn str_to_line_vec(s: &str) -> Vec<String> {
-    s.trim()
-        .to_string()
-        .split("\n")
-        .map(|x| return x.trim().to_string())
-        .collect::<Vec<String>>()
-}
+// fn str_to_line_vec(s: &str) -> Vec<String> {
+//     s.trim()
+//         .to_string()
+//         .split("\n")
+//         .map(|x| return x.trim().to_string())
+//         .collect::<Vec<String>>()
+// }
 
 use std::collections::HashMap;
 

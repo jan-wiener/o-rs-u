@@ -1,11 +1,11 @@
 
 
 use std::fs;
-use std::path::Path;
+
 use zip::ZipArchive;
 
 pub fn unzip_osufile(path_zip: &str, path_unzip: &str) -> Result<String, Box<dyn std::error::Error>>{
-    let mut file = fs::File::open(path_zip)?;
+    let file = fs::File::open(path_zip)?;
     let mut archive = ZipArchive::new(file)?;
 
     // let truepathunzip = format!("./assets/{}", path_unzip);

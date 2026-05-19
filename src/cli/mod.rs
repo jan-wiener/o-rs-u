@@ -34,7 +34,7 @@ pub struct Cli {
 
     pub uses_cli: bool,
 
-    converted: bool,
+
 }
 
 
@@ -57,7 +57,6 @@ impl Cli {
         Self {
             uses_cli: args.oszfile.is_some(),
             args,
-            converted: false,
         }
     }
 

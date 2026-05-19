@@ -2,8 +2,8 @@ use std::path::Path;
 use std::sync::Mutex;
 
 use bevy::asset::io::AssetSourceId;
-use bevy::asset::io::embedded::EmbeddedAssetRegistry;
-use bevy::asset::{AssetPath, embedded_asset, embedded_path, load_embedded_asset};
+
+use bevy::asset::{AssetPath, embedded_asset};
 use std::path::PathBuf;
 use bevy::prelude::*;
 use bevy_enoki::{EnokiPlugin, Particle2dEffect};
@@ -24,7 +24,6 @@ const CIRCLE_VISUAL_MULTIPLIER: f32 = 0.8;
 
 pub const WORLD_BG: RenderLayers = RenderLayers::layer(0);
 pub const WORLD_FG: RenderLayers = RenderLayers::layer(1);
-// pub const WORLD_FG_EXTRA: RenderLayers = RenderLayers::layer(2);
 
 pub const SVG_MODE: bool = true;
 
@@ -35,13 +34,13 @@ pub const CRATE_NAME: &str = "o_rs_u";
 
 
 static BEATMAP_PATH: LazyLock<Mutex<String>> = LazyLock::new(|| {Mutex::new("assets/beatmaps/hikarunara_hard.osu".to_string())});
-static MUSIC_PATH: LazyLock<Mutex<String>> = LazyLock::new(|| {Mutex::new("beatmaps/hikarunara.mp3".to_string())});
+// static MUSIC_PATH: LazyLock<Mutex<String>> = LazyLock::new(|| {Mutex::new("beatmaps/hikarunara.mp3".to_string())});
 static IMAGE_PATH: LazyLock<Mutex<Option<String>>> = LazyLock::new(|| {Mutex::new(None)});
 
 
 
 // Get Embedded path
-pub fn gep(path: &str) -> AssetPath {
+pub fn gep(path: &str) -> AssetPath<'_> {
     let path = String::from("assets/") + path;
     let path = PathBuf::from(Path::new(CRATE_NAME).join(path));
     let source = AssetSourceId::from("embedded");
@@ -326,7 +325,7 @@ fn start_game() {
     app.add_message::<RemoveCircle>();
     app.add_message::<LoadBeatmap>();
     app.add_message::<DrawLine>();
-    app.add_message::<StartMovingSlider>();
+    // app.add_message::<StartMovingSlider>();
     app.add_message::<AddScore>();
     app.add_message::<TickCheck>();
     app.add_message::<DrawTick>();

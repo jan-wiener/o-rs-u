@@ -17,7 +17,7 @@ pub fn remove_circle(
 }
 
 pub fn circle_click(
-    mut time: ResMut<Time<Virtual>>,
+    time: ResMut<Time<Virtual>>,
     mouse_button: Res<ButtonInput<MouseButton>>,
     kb: Res<ButtonInput<KeyCode>>,
 
@@ -109,7 +109,6 @@ pub fn circle_click(
                     entity,
                     started_at: time.elapsed_secs(),
                     // target_slides: circleinfo.slides,
-                    done_slides: 0,
                 });
                 // ring_q
                 //     .get_mut(children.first().unwrap().to_owned())
