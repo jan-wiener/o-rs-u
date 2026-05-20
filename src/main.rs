@@ -311,13 +311,13 @@ fn start_game() {
         DefaultPlugins
             .set(WindowPlugin {
                 primary_window: Some(Window {
-                    resolution:
-                        bevy_window::WindowResolution::new(800, 600).with_scale_factor_override(1.0),
-                    mode: bevy_window::WindowMode::Windowed,
+                    // resolution:
+                        // bevy_window::WindowResolution::new(800, 600).with_scale_factor_override(1.0),
+                    // mode: bevy_window::WindowMode::Windowed,
 
-                    // resolution: bevy_window::WindowResolution::new(1400, 720)
-                        // .with_scale_factor_override(1.0),
-                    // mode: bevy_window::WindowMode::BorderlessFullscreen(MonitorSelection::Current),
+                    resolution: bevy_window::WindowResolution::new(1400, 720)
+                        .with_scale_factor_override(1.0),
+                    mode: bevy_window::WindowMode::BorderlessFullscreen(MonitorSelection::Current),
                    
                     present_mode: bevy_window::PresentMode::AutoNoVsync,
                     ..Default::default()
