@@ -1,6 +1,8 @@
 use crate::osuparser::osutypes::OsuHitObject;
 use crate::osuparser::{OsuBeatmap, parse_osu_file_fs};
 use crate::public_resources::*;
+use bevy::audio::Volume;
+use bevy::input::mouse::{MouseWheel};
 use bevy::prelude::*;
 use std::path::Path;
 
@@ -68,7 +70,6 @@ pub fn load_osu_beatmap(
 
     let audiofile = bmap_info.audio_override.unwrap_or(osu.osumusicpath.clone());
 
-
     commands.entity(*audio).despawn();
     commands.spawn((
         GameAudio,
@@ -86,10 +87,7 @@ pub fn load_osu_beatmap(
         }
         // let color = gamebg.color.saturation();
         // gamebg.color.set_saturation(color * 0.1);
-
     }
-
-    
 
     println!("{}", &osu.osubg.filename);
     gamebg.custom_size = Some(window.size());
@@ -131,4 +129,32 @@ pub fn beatmap_worker(
     // println!("Doing smth");
 
     oho_msg.write(next.clone());
+}
+
+pub fn wheel_volume_system(
+    mut scroll_evr: MessageReader<MouseWheel>,
+    beatmap_music: Option<Single<&mut AudioSink, With<GameAudio>>>,
+) {
+    let Some(mut beatmap_music) = beatmap_music else {
+        return;
+    };
+
+    let mut total = 0.0;
+
+    for ev in scroll_evr.read() {
+        total += ev.y;
+    }
+    if total == 0.0 {return;}
+    total /= 10.0;
+
+    let vol = beatmap_music.volume();
+
+    let mut vol_f32 = vol.to_linear();
+    vol_f32 += total;
+    vol_f32 = vol_f32.clamp(0.0, 1.0);
+
+
+
+
+    beatmap_music.set_volume(Volume::Linear(vol_f32));
 }

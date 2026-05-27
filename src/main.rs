@@ -1,7 +1,8 @@
 use std::path::Path;
-use std::sync::Mutex;
 use std::path::PathBuf;
 use std::sync::LazyLock;
+use std::sync::Mutex;
+
 
 use clap::Parser;
 
@@ -11,9 +12,7 @@ use bevy::prelude::*;
 
 use bevy_enoki::{EnokiPlugin, Particle2dEffect};
 
-
-
-use crate::osuparser::{OsuBeatmap};
+use crate::osuparser::OsuBeatmap;
 use bevy::camera::visibility::RenderLayers;
 use bevy_vello::VelloPlugin;
 use bevy_vello::render::VelloView;
@@ -22,36 +21,28 @@ use crate::circles::etc::*;
 use crate::osuparser::osutypes::*;
 use crate::public_resources::*;
 
-mod mouse_pos_system;
 mod beatmaps;
 mod circles;
+mod cli;
 mod game_debug;
+mod mouse_pos_system;
 mod osuparser;
 mod public_resources;
-mod cli;
-
-
-
-
 
 const CIRCLE_VISUAL_MULTIPLIER: f32 = 0.8;
 
 pub const WORLD_BG: RenderLayers = RenderLayers::layer(0);
 pub const WORLD_FG: RenderLayers = RenderLayers::layer(1);
+pub const WORLD_TOP: RenderLayers = RenderLayers::layer(2);
 
 pub const SVG_MODE: bool = true;
 
-
-
-
 pub const CRATE_NAME: &str = "o_rs_u";
 
-
-static BEATMAP_PATH: LazyLock<Mutex<String>> = LazyLock::new(|| {Mutex::new("assets/beatmaps/hikarunara_hard.osu".to_string())});
+static BEATMAP_PATH: LazyLock<Mutex<String>> =
+    LazyLock::new(|| Mutex::new("assets/beatmaps/hikarunara_hard.osu".to_string()));
 // static MUSIC_PATH: LazyLock<Mutex<String>> = LazyLock::new(|| {Mutex::new("beatmaps/hikarunara.mp3".to_string())});
-static IMAGE_PATH: LazyLock<Mutex<Option<String>>> = LazyLock::new(|| {Mutex::new(None)});
-
-
+static IMAGE_PATH: LazyLock<Mutex<Option<String>>> = LazyLock::new(|| Mutex::new(None));
 
 // Get Embedded path
 pub fn gep(path: &str) -> AssetPath<'_> {
@@ -60,10 +51,7 @@ pub fn gep(path: &str) -> AssetPath<'_> {
     let source = AssetSourceId::from("embedded");
     let asset_path = AssetPath::from_path_buf(path).with_source(source);
     return asset_path;
-
 }
-
-
 
 fn setup_world(
     assets: Res<AssetServer>,
@@ -72,12 +60,12 @@ fn setup_world(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     _hitobj_writer: MessageWriter<OsuHitObject>,
-    window: Single<(&Window, Entity)>,
+    window: Single<(&mut Window, Entity)>,
     mut load_bmap_msg: MessageWriter<LoadBeatmap>,
     mut general_info: ResMut<GeneralInfo>,
 ) {
     commands.spawn((
-        Camera2d::default(), 
+        Camera2d::default(),
         Camera {
             order: 0,
             ..default()
@@ -97,6 +85,19 @@ fn setup_world(
         VelloView,
     ));
 
+    // commands.spawn((
+    //     Camera2d::default(),
+    //     Camera {
+    //         order: 2,
+    //         clear_color: ClearColorConfig::None,
+    //         ..default()
+    //     },
+    //     WORLD_TOP,
+    //     VelloView,
+    //     Cameraz2
+    // ));
+
+    // MESHES
 
     general_info.real_circle_radius = 49.92 * (window.0.size().y / 480.0);
 
@@ -129,14 +130,10 @@ fn setup_world(
     m.color = Color::srgba(0.6, 1.0, 0.0, alpha);
     let great_mat = MeshMaterial2d(materials.add(m));
 
-    // let main_svg = assets.load("skins/circle.svg");
     let main_svg = assets.load(gep("skins/circle.svg"));
     let slider_svg = assets.load(gep("skins/circle_slider.svg"));
 
-    // let mut great_hit = assets.load("skins/particles/great.ron");
-
-    // let great_hit_inner = particles.get_mut(great_hit.id()).unwrap();
-    // great_hit_inner.linear_speed.as_mut().unwrap().0 = 10.0;
+    // PARTICLES & MATS
 
     commands.insert_resource(GlobalParticleEffects {
         great_hit: assets.load(gep("skins/particles/great.ron")),
@@ -161,21 +158,19 @@ fn setup_world(
         slider_svg,
     });
 
-    // let p = Point { x: 0, y: 0 };
+    
 
-    // let pos = p.to_real_pos(window.0.size());
-    // println!("{:?}", pos);
+    // DEBUG BG
 
-    let mut o = OsuHitObject::default();
-    o.trpos = Some(Vec2::new(100.0, 100.0));
-    // hitobj_writer.write(o);
+    // let s = Sprite::from_color(
+    //     Color::srgba(1.0, 0.0, 0.0, 0.1),
+    //     Vec2::new(512.0, 384.0) * (window.0.height() / 480.0),
+    // );
+    //commands.spawn((s, Transform::from_xyz(0.0, 0.0, 0.0)));
 
-    let s = Sprite::from_color(
-        Color::srgba(1.0, 0.0, 0.0, 0.1),
-        Vec2::new(512.0, 384.0) * (window.0.height() / 480.0),
-    );
 
-    commands.spawn((s, Transform::from_xyz(0.0, 0.0, 0.0)));
+
+    // AUDIO PLACEHOLDER -- maybe remove later?
 
     let default_audio_source = assets.add(AudioSource {
         bytes: std::sync::Arc::new([]),
@@ -187,30 +182,64 @@ fn setup_world(
         PlaybackSettings::ONCE.paused(),
     ));
 
+    // LOADING BEATMAP FROM STATIC VALUE
+
     load_bmap_msg.write(LoadBeatmap {
         path: BEATMAP_PATH.lock().unwrap().to_owned(),
-        audio_override: None,  //MUSIC_PATH.lock().unwrap().to_owned()
+        audio_override: None, //MUSIC_PATH.lock().unwrap().to_owned()
     });
 
+    // UI - text, score,..
 
+    let ratio_fhd = window.0.size().y / 1080.0;
 
-    let default_text_shadow = TextShadow{offset: Vec2::new(4.0,-4.0), color: Color::srgb(1.0, 0.0, 0.0)};
-    let default_text_size = (window.0.size().y / 1080.0) * 50.0;
+    let default_text_shadow = TextShadow {
+        offset: Vec2::new(4.0, -4.0) * ratio_fhd,
+        color: Color::srgb(0.7, 0.0, 0.0),
+    };
+    let default_text_size = ratio_fhd * 50.0;
     let big_font = TextFont::from_font_size(default_text_size);
     let small_font = TextFont::from_font_size(default_text_size * 0.8);
 
+    let header_font = TextFont::from_font_size(default_text_size * 4.0);
+    let header_text_shadow = TextShadow {
+        offset: default_text_shadow.offset * 2.0,
+        color: Color::srgb(0.7, 0.0, 0.0),
+    };
+
+
     commands
-        .spawn(
+        .spawn((
             Node {
                 width: percent(100),
-                height: percent(5),
-                top: percent(5),
-                left: percent(2),
-                justify_content: JustifyContent::Start,
-                align_content: AlignContent::Start,
+                // height: percent(5),
+                top: percent(40),
+                left: percent(0),
+                justify_content: JustifyContent::Center,
+                align_content: AlignContent::Center,
                 ..Default::default()
-            } ,
-        )
+            },
+        ))
+        .with_child((
+            Text::new("-paused-"),
+            header_font.clone(),
+            TextColor(Color::srgb(1.0, 1.0, 1.0)),
+            header_text_shadow,
+            Visibility::Hidden,
+            PauseMenu,
+            TextBackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.5))
+        ));
+
+    commands
+        .spawn(Node {
+            width: percent(100),
+            height: percent(5),
+            top: percent(5),
+            left: percent(2),
+            justify_content: JustifyContent::Start,
+            align_content: AlignContent::Start,
+            ..Default::default()
+        })
         .with_child((
             ScoreGui,
             Text::new("Score: "),
@@ -219,17 +248,15 @@ fn setup_world(
             default_text_shadow,
         ));
     commands
-        .spawn(
-            Node {
-                width: percent(100),
-                height: percent(5),
-                top: percent(90),
-                left: percent(2),
-                justify_content: JustifyContent::Start,
-                align_content: AlignContent::End,
-                ..Default::default()
-            } ,
-        )
+        .spawn(Node {
+            width: percent(100),
+            height: percent(5),
+            top: percent(90),
+            left: percent(2),
+            justify_content: JustifyContent::Start,
+            align_content: AlignContent::End,
+            ..Default::default()
+        })
         .with_child((
             AccuracyGui,
             Text::new("Accuracy: "),
@@ -239,17 +266,15 @@ fn setup_world(
         ));
 
     commands
-        .spawn(
-            Node {
-                width: percent(100),
-                height: percent(5),
-                top: percent(85),
-                left: percent(2),
-                justify_content: JustifyContent::Start,
-                align_content: AlignContent::End,
-                ..Default::default()
-            } ,
-        )
+        .spawn(Node {
+            width: percent(100),
+            height: percent(5),
+            top: percent(85),
+            left: percent(2),
+            justify_content: JustifyContent::Start,
+            align_content: AlignContent::End,
+            ..Default::default()
+        })
         .with_child((
             ComboGui,
             Text::new("Combo: "),
@@ -258,7 +283,12 @@ fn setup_world(
             default_text_shadow,
         ));
 
-    let spr = Sprite::from_color(Color::srgb(0.0, 1.0, 0.0), Vec2::new(20.0, 20.0));
+    // CLICKING HELPER - the green square i guess
+
+    let spr = Sprite::from_color(
+        Color::srgb(0.0, 1.0, 0.0),
+        Vec2::splat(20.0 * (window.0.size().y / 1080.0)),
+    );
     commands.spawn((
         spr,
         Visibility::Hidden,
@@ -267,59 +297,46 @@ fn setup_world(
         WORLD_FG,
     ));
 
-    commands
-        .entity(window.1)
-        .insert((bevy_window::CursorIcon::Custom(
-            bevy_window::CustomCursor::Image(bevy_window::CustomCursorImage {
-                handle: assets.load(gep("skins/helpers/crosshair.png")),
+    // commands
+    //     .entity(window.1)
+    //     .insert((bevy_window::CursorIcon::Custom(
+    //         bevy_window::CustomCursor::Image(bevy_window::CustomCursorImage {
+    //             handle: assets.load(gep("skins/helpers/crosshair.png")),
+    //             texture_atlas: None,
+    //             flip_x: false,
+    //             flip_y: false,
+    //             rect: None,
+    //             hotspot: (0, 0),
+    //         }),
+    //     ),));
 
-                texture_atlas: None,
-                flip_x: false,
-                flip_y: false,
+    // BACKGROUND IMAGE
 
-                rect: None,
-                hotspot: (0, 0),
-            }),
-        ),));
-
-
-        let mut spr = Sprite::default();
-        println!("Color: {:?},", spr.color);
-        spr.color = Color::srgba(0.7, 0.7, 0.7, 1.0);
-        println!("Color: {:?},\n\n", spr.color);
-        commands.spawn((
-            Transform::default(),
-            spr,
-            GameBackground
-        ));
+    let mut spr = Sprite::default();
+    println!("Color: {:?},", spr.color);
+    spr.color = Color::srgba(0.7, 0.7, 0.7, 1.0);
+    println!("Color: {:?},\n\n", spr.color);
+    commands.spawn((Transform::default(), spr, GameBackground));
 }
-
-
-
-
 
 fn start_game() {
     // osuparser::parse_osu_file(Path::new("bad_apple.osu")).unwrap();
 
-    
-
     let mut app = App::new();
-
-    
 
     app.add_plugins(
         DefaultPlugins
             .set(WindowPlugin {
                 primary_window: Some(Window {
                     // resolution:
-                        // bevy_window::WindowResolution::new(800, 600).with_scale_factor_override(1.0),
+                    // bevy_window::WindowResolution::new(800, 600).with_scale_factor_override(1.0),
                     // mode: bevy_window::WindowMode::Windowed,
-
                     resolution: bevy_window::WindowResolution::new(1400, 720)
                         .with_scale_factor_override(1.0),
                     mode: bevy_window::WindowMode::BorderlessFullscreen(MonitorSelection::Current),
-                   
+
                     present_mode: bevy_window::PresentMode::AutoNoVsync,
+
                     ..Default::default()
                 }),
                 ..Default::default()
@@ -333,14 +350,13 @@ fn start_game() {
             }),
     );
 
-
     app.add_plugins(mouse_pos_system::MousePosPlugin);
     app.add_plugins(EnokiPlugin);
 
     app.add_plugins(game_debug::GameDebugPlugin);
 
     let mut vello = VelloPlugin::default();
-    vello.canvas_render_layers = WORLD_FG;
+    vello.canvas_render_layers = WORLD_FG; //WORLD_FG
     app.add_plugins(vello);
 
     app.insert_resource(Time::<Fixed>::from_hz(240.0));
@@ -368,6 +384,7 @@ fn start_game() {
     app.add_systems(
         Update,
         (
+            beatmaps::wheel_volume_system,
             circles::scoring::scale_particles_once,
             circles::what_should_i_click,
             circles::pausing::pausing_system.before(beatmaps::play_audio),
@@ -389,7 +406,6 @@ fn start_game() {
         ),
     );
 
-
     embedded_asset!(app, "assets/skins/circle.svg");
     embedded_asset!(app, "assets/skins/circle.png");
     embedded_asset!(app, "assets/skins/circle_slider.svg");
@@ -403,12 +419,6 @@ fn start_game() {
     embedded_asset!(app, "assets/skins/particles/tick_ok.ron");
     embedded_asset!(app, "assets/skins/helpers/crosshair.png");
 
-
-
-
-
-
-
     // println!("{:?}",embedded_path!("assets/skins/circle.svg"));
 
     // app.add_systems(FixedUpdate, circles::clicking::circle_click);
@@ -416,25 +426,18 @@ fn start_game() {
     app.run();
 }
 
-
-
 fn main() {
     let mut cli = cli::Cli::from_args(cli::Args::parse());
     if cli.uses_cli {
         cli.extract_osz_file().unwrap();
     }
-    
-    // println!("args: {:?}", args);
-    
 
+    // println!("args: {:?}", args);
 
     // let path_unzip = osuparser::unzipper::unzip_osufile("./440169 Goose house - Hikaru nara.osz", "beatmap_extract/440169 Goose house - Hikaru nara.osz").unwrap();
     // println!("{}", path_unzip);
     // osuparser::unzipper::get_osu_files_from_extracted_osz_file(&path_unzip).unwrap();
     // return;
 
-
     start_game();
-    
-
 }

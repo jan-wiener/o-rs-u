@@ -3,6 +3,11 @@ use crate::public_resources::{AccuracyGui, AddScore, ComboGui, HitScore, ScoreGu
 use bevy::prelude::*;
 use bevy_enoki::Particle2dEffect;
 
+use crate::GlobalParticleEffects;
+use crate::WORLD_FG;
+use bevy_enoki::{ParticleEffectHandle, ParticleSpawner, prelude::OneShot};
+
+
 //Score = ((700000 * combo_bonus / max_combo_bonus) + (300000 * ((accuracy_percentage / 100) ^ 10) * elapsed_objects / total_objects) + spinner_bonus) * mod_multiplier
 
 pub fn score_system(
@@ -21,9 +26,10 @@ pub fn score_system(
             score_info.hit_score.push(add_score.score.clone());
         }
 
-        let hit_score_number = add_score.score.to_number();
+        // let hit_score_number = add_score.score.to_number();
 
-        println!("Score: {}", hit_score_number);
+        // println!("Score: {}", hit_score_number);
+
         // println!("combo: {} | accuracy: {} | objects: {}", score_info.current_combo,score_info.get_accuracy(), score_info.hit_score.len());
 
         if add_score.score.is_miss() {
@@ -50,9 +56,6 @@ pub fn score_system(
     }
 }
 
-use crate::GlobalParticleEffects;
-use crate::WORLD_FG;
-use bevy_enoki::{ParticleEffectHandle, ParticleSpawner, prelude::OneShot};
 
 pub fn summon_particles(
     result: &HitScore,

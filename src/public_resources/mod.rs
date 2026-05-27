@@ -260,6 +260,7 @@ impl HitScore {
         }
     }
 
+    #[allow(dead_code)]
     pub fn to_number(&self) -> i32 {
         let score;
         match self {
@@ -371,7 +372,13 @@ pub struct GameAudio;
 #[derive(Component)]
 pub struct Cameraz0;
 
+#[derive(Component)]
+pub struct Cameraz2;
 
+
+
+#[derive(Component)]
+pub struct PauseMenu;
 
 
 
