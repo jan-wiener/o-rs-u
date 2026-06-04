@@ -417,7 +417,7 @@ fn start_game() {
     embedded_asset!(app, "assets/skins/particles/tick_hit.ron");
     embedded_asset!(app, "assets/skins/particles/tick_miss.ron");
     embedded_asset!(app, "assets/skins/particles/tick_ok.ron");
-    embedded_asset!(app, "assets/skins/helpers/crosshair.png");
+    embedded_asset!(app, "assets/skins/helpers/crosshair2.png");
 
     // println!("{:?}",embedded_path!("assets/skins/circle.svg"));
 

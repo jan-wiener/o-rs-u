@@ -15,7 +15,16 @@ impl Plugin for GameDebugPlugin {
     }
 }
 
+
+#[derive(Resource)]
+struct FpsTimer {
+    timer: Timer,
+}
+
+
 fn fps_component_add(mut commands: Commands, window: Single<(&Window, Entity)>,) {
+    commands.insert_resource(FpsTimer{timer: Timer::from_seconds(0.5, TimerMode::Repeating)});
+
     let text = "";
     commands
         .spawn((Node {
@@ -51,7 +60,12 @@ fn fps_component_add(mut commands: Commands, window: Single<(&Window, Entity)>,)
 
 
 
-fn show_fps(mut fpsgui: Single<&mut Text, With<FpsGUI>>, diagnostics: Res<DiagnosticsStore>) {
+fn show_fps(mut fpsgui: Single<&mut Text, With<FpsGUI>>, diagnostics: Res<DiagnosticsStore>, mut timer: ResMut<FpsTimer>, time: Res<Time>) {
+    timer.timer.tick(time.delta());
+    if !timer.timer.just_finished() {
+        return;
+    }
+
     if let Some(fps) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS)
         && let Some(value) = fps.smoothed()
     {

@@ -470,8 +470,8 @@ impl OsuBeatmap {
                 osubg.filename = fname;
 
                 let osubg_offset = Vec2::new(
-                    items[3].parse::<f32>().unwrap(),
-                    items[4].parse::<f32>().unwrap(),
+                    items.get(3).unwrap_or(&"0.0").parse::<f32>().unwrap(),
+                    items.get(4).unwrap_or(&"0.0").parse::<f32>().unwrap(),
                 );
                 osubg.offset = osubg_offset;
             }

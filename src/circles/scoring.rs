@@ -34,7 +34,7 @@ pub fn score_system(
 
         if add_score.score.is_miss() {
             score_info.current_combo = 0;
-        } else {
+        } else if add_score.score != HitScore::SliderEndMiss {
             score_info.current_combo += 1;
         }
 

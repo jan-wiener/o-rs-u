@@ -50,7 +50,7 @@ impl Cli {
         if !self.uses_cli {
             return Err(Box::new(ArgError::IsNotCli));
         }
-        let _ = fs::remove_dir_all("assets/cli");
+        
 
         let binary_dir = if std::env::var("CARGO").is_ok() {
             std::env::current_dir().expect("Failed to get CWD")
@@ -62,6 +62,10 @@ impl Cli {
                 .to_path_buf()
         };
         let path_unzip_pathbuf = binary_dir.join("assets/cli");
+
+        let _ = fs::remove_dir_all(&path_unzip_pathbuf);
+
+
         let path_unzip = path_unzip_pathbuf
             .to_str()
             .ok_or(ArgError::BadArgument)?

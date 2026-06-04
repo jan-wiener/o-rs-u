@@ -1,4 +1,4 @@
-use crate::{WORLD_FG, WORLD_TOP, public_resources::*};
+use crate::{WORLD_FG, WORLD_TOP, gep, public_resources::*};
 use bevy::prelude::*;
 use bevy_vello::prelude::VelloSvg2d;
 use bevy_window::CursorOptions;
@@ -19,7 +19,7 @@ pub struct CursorImage;
 fn init_mouse_system(mut commands: Commands, assets: Res<AssetServer>, copt: Option<Single<&mut CursorOptions>>, window: Single<&Window>,) {
     copt.unwrap().into_inner().visible = false;
 
-    let image_handle = assets.load("skins/helpers/crosshair2.png");
+    let image_handle = assets.load(gep("skins/helpers/crosshair2.png"));
 
     let cursor_image = Sprite::from_image(image_handle);
 

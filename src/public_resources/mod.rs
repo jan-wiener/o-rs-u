@@ -220,7 +220,7 @@ pub struct GeneralInfo {
     pub real_circle_radius: f32,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum HitScore {
     Great,
     Ok,
